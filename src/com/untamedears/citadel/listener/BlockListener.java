@@ -42,8 +42,9 @@ public class BlockListener extends PluginConsumer implements Listener {
         if (state.getMode() != PlacementMode.FORTIFICATION) {
             // if we are not in fortification mode
             // cancel event if we are not in normal mode
-            if (state.getMode() == PlacementMode.REINFORCEMENT || state.getMode() == PlacementMode.REINFORCEMENT_SINGLE_BLOCK)
+            if (state.getMode() == PlacementMode.REINFORCEMENT || state.getMode() == PlacementMode.REINFORCEMENT_SINGLE_BLOCK) {
                 bpe.setCancelled(true);
+            }
             return;
         }
 
@@ -56,23 +57,36 @@ public class BlockListener extends PluginConsumer implements Listener {
             if (createReinforcement(player, block) == null) {
                 sendMessage(player, ChatColor.RED, "%s is not a reinforcible material", block.getType().name());
             }
-            else
+            else {
             	state.checkResetMode();
+            }
         } else {
             sendMessage(player, ChatColor.YELLOW, "%s depleted, left fortification mode", material.getMaterial().name());
             state.reset();
             bpe.setCancelled(true);
         }
     }
+    
+    private boolean preventDamage = false;
+    
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void blockDamage(BlockDamageEvent bde) {
+    	bde.setCancelled(preventDamage);
+    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void blockBreak(BlockBreakEvent bbe) {
+    	preventDamage = true;
         Block block = bbe.getBlock();
         Player player = bbe.getPlayer();
 
         AccessDelegate delegate = AccessDelegate.getDelegate(block);
         Reinforcement reinforcement = delegate.getReinforcement();
-        if (reinforcement == null) return;
+        
+        if (reinforcement == null) {
+        	preventDamage = false;
+        	return;
+        }
 
         PlayerState state = PlayerState.get(player);
         if (state.isBypassMode() && reinforcement.isBypassable(player)) {
@@ -85,6 +99,8 @@ public class BlockListener extends PluginConsumer implements Listener {
         if (bbe.isCancelled()) {
             block.getDrops().clear();
         }
+        
+        preventDamage = false;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
@@ -92,7 +108,9 @@ public class BlockListener extends PluginConsumer implements Listener {
         for (Block block : bpee.getBlocks()) {
             Reinforcement reinforcement = plugin.dao.findReinforcement(block);
             bpee.setCancelled(reinforcement != null && reinforcement.getSecurityLevel() != SecurityLevel.PUBLIC);
-            if (bpee.isCancelled()) return;
+            if (bpee.isCancelled()) {
+            	return;
+            }
         }
     }
     
