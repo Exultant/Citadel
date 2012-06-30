@@ -21,6 +21,8 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.material.Openable;
 import org.bukkit.Material;
 
+import sun.security.util.Debug;
+
 import static com.untamedears.citadel.Utility.*;
 
 public class BlockListener extends PluginConsumer implements Listener {
@@ -67,31 +69,22 @@ public class BlockListener extends PluginConsumer implements Listener {
         }
     }
     
-    private boolean preventDamage = false;
-    
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void blockDamage(BlockDamageEvent bde) {
-    	bde.setCancelled(preventDamage);
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.LOW)
     public void blockBreak(BlockBreakEvent bbe) {
-    	preventDamage = true;
-        Block block = bbe.getBlock();
-        Player player = bbe.getPlayer();
-
+    	
+    	Block block = bbe.getBlock();
+    	Player player = bbe.getPlayer();
+    	
         AccessDelegate delegate = AccessDelegate.getDelegate(block);
         Reinforcement reinforcement = delegate.getReinforcement();
         
         if (reinforcement == null) {
-        	preventDamage = false;
         	return;
-        }
-
+        }	
+        
         PlayerState state = PlayerState.get(player);
         if (state.isBypassMode() && reinforcement.isBypassable(player)) {
             plugin.logVerbose("Player %s bypassed reinforcement %s", player.getDisplayName(), reinforcement);
-
             bbe.setCancelled(reinforcementBroken(reinforcement));
         } else {
             bbe.setCancelled(reinforcementDamaged(reinforcement));
@@ -100,7 +93,6 @@ public class BlockListener extends PluginConsumer implements Listener {
             block.getDrops().clear();
         }
         
-        preventDamage = false;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
