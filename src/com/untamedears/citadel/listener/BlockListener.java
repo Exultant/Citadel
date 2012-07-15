@@ -9,7 +9,10 @@ import com.untamedears.citadel.entity.PlayerState;
 import com.untamedears.citadel.entity.Reinforcement;
 import com.untamedears.citadel.entity.ReinforcementMaterial;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,8 +21,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.material.Door;
+import org.bukkit.material.MaterialData;
 import org.bukkit.material.Openable;
 import org.bukkit.Material;
+import org.bukkit.material.PistonBaseMaterial;
 
 import sun.security.util.Debug;
 
@@ -97,19 +103,60 @@ public class BlockListener extends PluginConsumer implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void pistonExtend(BlockPistonExtendEvent bpee) {
-        for (Block block : bpee.getBlocks()) {
-            Reinforcement reinforcement = plugin.dao.findReinforcement(block);
-            bpee.setCancelled(reinforcement != null && reinforcement.getSecurityLevel() != SecurityLevel.PUBLIC);
-            if (bpee.isCancelled()) {
-            	return;
-            }
-        }
+    	Block piston = bpee.getBlock();
+	BlockState state = piston.getState();
+	MaterialData data = state.getData();
+	BlockFace direction = null;
+	
+	if (data instanceof PistonBaseMaterial) {
+		direction = ((PistonBaseMaterial) data).getFacing();
+	}
+	
+	// if no direction was found, no point in going on
+	if (direction == null)
+		return;
+	
+	// Check the affected blocks
+	for (int i = 1; i < bpee.getLength() + 2; i++) {
+		Block block = piston.getRelative(direction, i);
+	
+		if (block.getType() == Material.AIR)
+			break;
+	
+		AccessDelegate delegate = AccessDelegate.getDelegate(block);
+		Reinforcement reinforcement = delegate.getReinforcement();
+	
+		if (reinforcement != null){
+			bpee.setCancelled(true);
+			break;
+		}
+	}
     }
     
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void pistonRetract(BlockPistonRetractEvent bpre) {
-        Reinforcement reinforcement = plugin.dao.findReinforcement(bpre.getBlock());
-        bpre.setCancelled(reinforcement != null && reinforcement.getSecurityLevel() != SecurityLevel.PUBLIC);
+    	Block piston = bpre.getBlock();
+	BlockState state = piston.getState();
+	MaterialData data = state.getData();
+	BlockFace direction = null;
+
+	// Check the block it pushed directly
+	if (data instanceof PistonBaseMaterial) {
+		direction = ((PistonBaseMaterial) data).getFacing();
+	}
+
+	if (direction == null)
+		return;
+
+	// the block that the piston moved
+	Block moved = piston.getRelative(direction, 2);
+
+	AccessDelegate delegate = AccessDelegate.getDelegate(moved);
+	Reinforcement reinforcement = delegate.getReinforcement();
+
+	if (reinforcement != null) {
+		bpre.setCancelled(true);
+	}
     }
     
     private static final Material matfire = Material.FIRE;
