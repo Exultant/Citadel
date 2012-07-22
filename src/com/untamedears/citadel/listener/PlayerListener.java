@@ -1,8 +1,9 @@
 package com.untamedears.citadel.listener;
 
-import static com.untamedears.citadel.Utility.createReinforcement;
-import static com.untamedears.citadel.Utility.sendMessage;
-
+import com.untamedears.citadel.Citadel;
+import com.untamedears.citadel.PlacementMode;
+import com.untamedears.citadel.access.AccessDelegate;
+import com.untamedears.citadel.entity.*;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -17,61 +18,49 @@ import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.material.Openable;
 
-import com.untamedears.citadel.Citadel;
-import com.untamedears.citadel.GroupManager;
-import com.untamedears.citadel.MemberManager;
-import com.untamedears.citadel.PersonalGroupManager;
-import com.untamedears.citadel.PlacementMode;
-import com.untamedears.citadel.access.AccessDelegate;
-import com.untamedears.citadel.entity.Faction;
-import com.untamedears.citadel.entity.Member;
-import com.untamedears.citadel.entity.PlayerState;
-import com.untamedears.citadel.entity.Reinforcement;
+import static com.untamedears.citadel.Utility.createReinforcement;
+import static com.untamedears.citadel.Utility.sendMessage;
 
 /**
  * Created by IntelliJ IDEA.
  * User: chrisrico
  * Date: 3/21/12
  * Time: 9:57 PM
- * 
- * Last edited by JonnyD
- * 7/18/12
  */
 public class PlayerListener implements Listener {
-	
+
+    private Citadel plugin;
+
+    public PlayerListener(Citadel plugin) {
+        this.plugin = plugin;
+    }
+
     @EventHandler
     public void login(PlayerLoginEvent ple) {
-    	MemberManager memberManager = Citadel.getMemberManager();
-    	memberManager.addOnlinePlayer(ple.getPlayer());
+        String name = ple.getPlayer().getDisplayName();
+        Faction faction = plugin.dao.findGroupByName(name);
+        if (faction == null) {
+            plugin.logVerbose("Created personal faction for player %s", name);
 
-    	String playerName = ple.getPlayer().getDisplayName();
-    	Member member = memberManager.getMember(playerName);
-    	if(member == null){
-    		member = new Member(playerName);
-    		memberManager.addMember(member);
-    	}
-    	
-		PersonalGroupManager personalGroupManager = Citadel.getPersonalGroupManager();
-    	if(!personalGroupManager.hasPersonalGroup(playerName)){
-    		GroupManager groupManager = Citadel.getGroupManager();
-			String groupName = playerName;
-			int i = 1;
-    		while(groupManager.isGroup(groupName)){
-    			groupName = playerName + i;
-    			i++;
-    		}
-        	Faction group = new Faction(groupName, playerName);
-    		groupManager.addGroup(group);
-    		personalGroupManager.addPersonalGroup(groupName, playerName);
-    	}
+            faction = new Faction(name, name);
+            plugin.dao.save(faction);
+        }
+        for (FactionMember member : plugin.dao.findGroupMembers(name)) {
+            Player player = plugin.getServer().getPlayer(member.getMemberName());
+            if (player != null)
+                sendMessage(player, ChatColor.WHITE, "%s has logged in", name);
+        }
     }
 
     @EventHandler
     public void quit(PlayerQuitEvent pqe) {
-    	Player player = pqe.getPlayer();
-    	MemberManager memberManager = Citadel.getMemberManager();
-    	memberManager.removeOnlinePlayer(player);
-        PlayerState.remove(player);
+        String name = pqe.getPlayer().getDisplayName();
+        for (FactionMember member : plugin.dao.findGroupMembers(name)) {
+            Player player = plugin.getServer().getPlayer(member.getMemberName());
+            if (player != null)
+                sendMessage(player, ChatColor.GRAY, "%s has logged out", name);
+        }
+        PlayerState.remove(pqe.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -102,29 +91,18 @@ public class PlayerListener implements Listener {
             case INFO:
                 // did player click on a reinforced block?
                 if (reinforcement != null) {
-                    if(reinforcement.isAccessible(player)){
-                    	sendMessage(player, ChatColor.GREEN, "%s, security: %s-%s", reinforcement.getStatus(), reinforcement.getSecurityLevel().name(), reinforcement.getOwner().getName());
-                    } else {
-                    	sendMessage(player, ChatColor.RED, "%s, security: %s", reinforcement.getStatus(), reinforcement.getSecurityLevel().name());
-                    }
+                    ChatColor color = reinforcement.isAccessible(player) ? ChatColor.GREEN : ChatColor.RED;
+                    sendMessage(player, color, "%s, security: %s", reinforcement.getStatus(), reinforcement.getSecurityLevel().name());
                 }
                 break;
             default:
                 // player is in reinforcement mode
                 if (reinforcement == null) {
                     createReinforcement(player, block);
-                } else if (reinforcement.isBypassable(player)) {
-                	boolean update = false;
-                    if (reinforcement.getSecurityLevel() != state.getSecurityLevel()){
+                } else if (reinforcement.isAccessible(player)) {
+                    if (reinforcement.getSecurityLevel() != state.getSecurityLevel()) {
                         reinforcement.setSecurityLevel(state.getSecurityLevel());
-                        update = true;
-                    }
-                   	if(!reinforcement.getOwner().equals(state.getFaction())) {
-                        reinforcement.setOwner(state.getFaction());
-                        update = true;
-                    }
-                   	if(update){
-                        Citadel.getReinforcementManager().addReinforcement(reinforcement);
+                        plugin.dao.save(reinforcement);
                         sendMessage(player, ChatColor.GREEN, "Changed security level %s", reinforcement.getSecurityLevel().name());
                     }
                 } else {
@@ -149,9 +127,7 @@ public class PlayerListener implements Listener {
                 // opening secured doors to right clicking
                 pie.setUseInteractedBlock(Event.Result.DENY);
             } else if (pie.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            	Citadel.info("%s failed to access locked reinforcement %s, " 
-            			+ pie.getPlayer().getDisplayName() + " at " 
-            			+ reinforcement.getBlock().getLocation().toString());
+                plugin.logVerbose("%s failed to access locked reinforcement %s", pie.getPlayer().getDisplayName(), reinforcement);
                 // this block is secured and is inaccesible to the player
                 sendMessage(pie.getPlayer(), ChatColor.RED, "%s is locked", pie.getClickedBlock().getType().name());
                 pie.setCancelled(true);

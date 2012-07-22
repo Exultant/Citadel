@@ -1,13 +1,12 @@
 package com.untamedears.citadel.task;
 
+import com.untamedears.citadel.Citadel;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ContainerBlock;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
-
-import com.untamedears.citadel.Citadel;
 
 /**
  * Created by IntelliJ IDEA.
@@ -42,14 +41,14 @@ public class BlockFlasher implements Runnable {
         setCleanupTask();
         setData(flashData);
 
-        plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, this, 20L * Citadel.getConfigManager().getFlashLength());
+        plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, this, 20L * plugin.flashLength);
     }
 
     public void run() {
         if (parent == null) {
             revert();
         } else {
-            parent.start(Citadel.getPlugin());
+            parent.start(Citadel.getInstance());
         }
     }
 

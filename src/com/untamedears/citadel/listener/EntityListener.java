@@ -1,11 +1,8 @@
 package com.untamedears.citadel.listener;
 
-import static com.untamedears.citadel.Utility.maybeReinforcementDamaged;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
+import com.untamedears.citadel.Citadel;
+import com.untamedears.citadel.PluginConsumer;
+import com.untamedears.citadel.entity.Reinforcement;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -18,9 +15,11 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 
-import com.untamedears.citadel.Citadel;
-import com.untamedears.citadel.ReinforcementManager;
-import com.untamedears.citadel.entity.Reinforcement;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import static com.untamedears.citadel.Utility.maybeReinforcementDamaged;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,20 +27,20 @@ import com.untamedears.citadel.entity.Reinforcement;
  * Date: 3/21/12
  * Time: 9:56 PM
  */
-public class EntityListener implements Listener {
+public class EntityListener extends PluginConsumer implements Listener {
+
+    public EntityListener(Citadel plugin) {
+        super(plugin);
+    }
 
     @EventHandler(ignoreCancelled = true)
     public void explode(EntityExplodeEvent eee) {
         Iterator<Block> iterator = eee.blockList().iterator();
         while (iterator.hasNext()) {
             Block block = iterator.next();
-            try {
-	            if (maybeReinforcementDamaged(block)) {
-	                block.getDrops().clear();
-	                iterator.remove();
-	            }
-            } catch (NoClassDefFoundError e){
-            	Citadel.warning("NoClassDefFoundError");
+            if (maybeReinforcementDamaged(block)) {
+                block.getDrops().clear();
+                iterator.remove();
             }
         }
     }
@@ -58,16 +57,14 @@ public class EntityListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void spawn(CreatureSpawnEvent cse) {
-    	ReinforcementManager reinforcementManager = Citadel.getReinforcementManager();
         EntityType type = cse.getEntityType();
         if (type != EntityType.IRON_GOLEM && type != EntityType.SNOWMAN) return;
 
         for (Block block : getGolemBlocks(type, cse.getLocation().getBlock())) {
-            Reinforcement reinforcement = reinforcementManager.getReinforcement(block);
+            Reinforcement reinforcement = plugin.dao.findReinforcement(block);
             if (reinforcement != null) {
-            	Citadel.info("Reinforcement %s removed due to golem creation at " 
-            			+ reinforcement.getBlock().getLocation().toString());
-                reinforcementManager.removeReinforcement(reinforcement);
+                plugin.logVerbose("Reinforcement %s removed due to golem creation", reinforcement);
+                plugin.dao.delete(reinforcement);
             }
         }
     }
@@ -92,12 +89,10 @@ public class EntityListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void grow(StructureGrowEvent sge) {
-    	ReinforcementManager reinforcementManager = Citadel.getReinforcementManager();
-        Reinforcement reinforcement = reinforcementManager.getReinforcement(sge.getLocation());
+        Reinforcement reinforcement = plugin.dao.findReinforcement(sge.getLocation());
         if (reinforcement != null) {
-        	Citadel.info("Reinforcement %s removed due to structure growth at " 
-        			+ reinforcement.getBlock().getLocation().toString());
-            reinforcementManager.removeReinforcement(reinforcement);
+            plugin.logVerbose("Reinforcement %s removed due to structure growth", reinforcement);
+            plugin.dao.delete(reinforcement);
         }
     }
 }

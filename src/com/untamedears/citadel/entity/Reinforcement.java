@@ -1,13 +1,6 @@
 package com.untamedears.citadel.entity;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-
+import com.untamedears.citadel.SecurityLevel;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -15,11 +8,13 @@ import org.bukkit.block.ContainerBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.material.Openable;
 
-import com.untamedears.citadel.SecurityLevel;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * User: chrisrico
- */
 @Entity
 public class Reinforcement {
 
@@ -56,13 +51,7 @@ public class Reinforcement {
     }
 
     public Block getBlock() {
-        Block block;
-        try {
-        	block = Bukkit.getServer().getWorld(id.getWorld()).getBlockAt(id.getX(), id.getY(), id.getZ());
-        } catch (NullPointerException e){
-        	return null;
-        }
-        return block;
+        return Bukkit.getServer().getWorld(id.getWorld()).getBlockAt(id.getX(), id.getY(), id.getZ());
     }
 
     public ReinforcementMaterial getMaterial() {
@@ -97,8 +86,8 @@ public class Reinforcement {
         return owner;
     }
 
-    public void setOwner(Faction group) {
-        this.owner = group;
+    public void setOwner(Faction owner) {
+        this.owner = owner;
     }
 
     public double getHealth() {
@@ -137,7 +126,7 @@ public class Reinforcement {
             case PRIVATE:
                 return name.equals(owner.getFounder());
             case GROUP:
-                return name.equals(owner.getFounder()) || owner.isMember(name) || owner.isModerator(name);
+                return name.equals(owner.getFounder()) || owner.hasMember(name);
         }
         return true;
     }
@@ -148,7 +137,7 @@ public class Reinforcement {
             case PRIVATE:
                 return name.equals(owner.getFounder());
             default:
-                return name.equals(owner.getFounder()) || owner.isModerator(name);
+                return name.equals(owner.getFounder()) || owner.hasMember(name);
         }
     }
 
@@ -168,20 +157,5 @@ public class Reinforcement {
     @Override
     public String toString() {
         return String.format("%s, material: %s, durability: %d", id, getMaterial().getMaterial().name(), durability);
-    }
-    
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Reinforcement)) return false;
-
-        Reinforcement rein = (Reinforcement) o;
-
-        return this.id.equals(rein.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.id.hashCode();
     }
 }
