@@ -1,5 +1,9 @@
 package com.untamedears.citadel.listener;
 
+import java.util.ConcurrentModificationException;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.untamedears.citadel.Citadel;
 import com.untamedears.citadel.PlacementMode;
 import com.untamedears.citadel.PluginConsumer;
@@ -27,8 +31,6 @@ import org.bukkit.material.Openable;
 import org.bukkit.Material;
 import org.bukkit.material.PistonBaseMaterial;
 
-import sun.security.util.Debug;
-
 import static com.untamedears.citadel.Utility.*;
 
 public class BlockListener extends PluginConsumer implements Listener {
@@ -50,9 +52,8 @@ public class BlockListener extends PluginConsumer implements Listener {
         if (state.getMode() != PlacementMode.FORTIFICATION) {
             // if we are not in fortification mode
             // cancel event if we are not in normal mode
-            if (state.getMode() == PlacementMode.REINFORCEMENT || state.getMode() == PlacementMode.REINFORCEMENT_SINGLE_BLOCK) {
+            if (state.getMode() == PlacementMode.REINFORCEMENT || state.getMode() == PlacementMode.REINFORCEMENT_SINGLE_BLOCK)
                 bpe.setCancelled(true);
-            }
             return;
         }
 
@@ -65,32 +66,29 @@ public class BlockListener extends PluginConsumer implements Listener {
             if (createReinforcement(player, block) == null) {
                 sendMessage(player, ChatColor.RED, "%s is not a reinforcible material", block.getType().name());
             }
-            else {
+            else
             	state.checkResetMode();
-            }
         } else {
             sendMessage(player, ChatColor.YELLOW, "%s depleted, left fortification mode", material.getMaterial().name());
             state.reset();
             bpe.setCancelled(true);
         }
     }
-    
-    @EventHandler(priority = EventPriority.LOW)
+
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void blockBreak(BlockBreakEvent bbe) {
-    	
-    	Block block = bbe.getBlock();
-    	Player player = bbe.getPlayer();
-    	
+        Block block = bbe.getBlock();
+        Player player = bbe.getPlayer();
+
         AccessDelegate delegate = AccessDelegate.getDelegate(block);
         Reinforcement reinforcement = delegate.getReinforcement();
-        
-        if (reinforcement == null) {
-        	return;
-        }	
-        
+        if (reinforcement == null) return;
+
         PlayerState state = PlayerState.get(player);
         if (state.isBypassMode() && reinforcement.isBypassable(player)) {
-            plugin.logVerbose("Player %s bypassed reinforcement %s", player.getDisplayName(), reinforcement);
+			Citadel.info(player.getDisplayName() + " bypassed reinforcement %s at " 
+					+ reinforcement.getBlock().getLocation().toString());
+
             bbe.setCancelled(reinforcementBroken(reinforcement));
         } else {
             bbe.setCancelled(reinforcementDamaged(reinforcement));
@@ -98,7 +96,6 @@ public class BlockListener extends PluginConsumer implements Listener {
         if (bbe.isCancelled()) {
             block.getDrops().clear();
         }
-        
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
@@ -197,22 +194,27 @@ public class BlockListener extends PluginConsumer implements Listener {
         Openable openable = (Openable) block.getState().getData();
         if (openable.isOpen()) return;
         
-        Reinforcement reinforcement = plugin.dao.findReinforcement(block);
+        Reinforcement reinforcement = Citadel.getReinforcementManager().getReinforcement(block);
         if (reinforcement == null || reinforcement.getSecurityLevel() == SecurityLevel.PUBLIC) return;
 
-        boolean isAuthorizedPlayerNear = false;
-        for (Entity entity : block.getChunk().getEntities()) {
-            if (entity instanceof Player) {
-                if (entity.getLocation().distanceSquared(block.getLocation()) < plugin.redstoneDistance
-                        && reinforcement.isAccessible((Player) entity)) {
-                    isAuthorizedPlayerNear = true;
-                }
-                if (isAuthorizedPlayerNear) break;
-            }
-        }
+        Set<Player> onlinePlayers = new HashSet<Player>(Citadel.getMemberManager().getOnlinePlayers());
+		boolean isAuthorizedPlayerNear = false;
+		try {
+			for(Player player : onlinePlayers){
+				double redstoneDistance = Citadel.getConfigManager().getRedstoneDistance();
+				if(reinforcement.isAccessible(player) 
+						&& player.getLocation().distanceSquared(block.getLocation()) < redstoneDistance){
+					isAuthorizedPlayerNear = true;
+					break;
+				}
+			}
+		} catch (ConcurrentModificationException e){
+			
+		}
 
         if (!isAuthorizedPlayerNear) {
-            plugin.logVerbose("Prevented redstone from opening reinforcement %s", reinforcement);
+			Citadel.info("Prevented redstone from opening reinforcement %s at " 
+					+ reinforcement.getBlock().getLocation().toString());
             bre.setNewCurrent(bre.getOldCurrent());
         }
     }
