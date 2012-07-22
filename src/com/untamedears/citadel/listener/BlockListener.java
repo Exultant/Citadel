@@ -55,8 +55,9 @@ public class BlockListener implements Listener {
         if (state.getMode() != PlacementMode.FORTIFICATION) {
             // if we are not in fortification mode
             // cancel event if we are not in normal mode
-            if (state.getMode() == PlacementMode.REINFORCEMENT || state.getMode() == PlacementMode.REINFORCEMENT_SINGLE_BLOCK)
+            if (state.getMode() == PlacementMode.REINFORCEMENT || state.getMode() == PlacementMode.REINFORCEMENT_SINGLE_BLOCK) {
                 bpe.setCancelled(true);
+            }
             return;
         }
 
@@ -69,29 +70,33 @@ public class BlockListener implements Listener {
             if (createReinforcement(player, block) == null) {
                 sendMessage(player, ChatColor.RED, "%s is not a reinforcible material", block.getType().name());
             }
-            else
+            else {
             	state.checkResetMode();
+            }
         } else {
             sendMessage(player, ChatColor.YELLOW, "%s depleted, left fortification mode", material.getMaterial().name());
             state.reset();
             bpe.setCancelled(true);
         }
     }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
+    
+    @EventHandler(priority = EventPriority.LOW)
     public void blockBreak(BlockBreakEvent bbe) {
-        Block block = bbe.getBlock();
-        Player player = bbe.getPlayer();
-
+    	
+    	Block block = bbe.getBlock();
+    	Player player = bbe.getPlayer();
+    	
         AccessDelegate delegate = AccessDelegate.getDelegate(block);
         Reinforcement reinforcement = delegate.getReinforcement();
-        if (reinforcement == null) return;
-
+        
+        if (reinforcement == null) {
+        	return;
+        }	
+        
         PlayerState state = PlayerState.get(player);
         if (state.isBypassMode() && reinforcement.isBypassable(player)) {
 			Citadel.info(player.getDisplayName() + " bypassed reinforcement %s at " 
 					+ reinforcement.getBlock().getLocation().toString());
-
             bbe.setCancelled(reinforcementBroken(reinforcement));
         } else {
             bbe.setCancelled(reinforcementDamaged(reinforcement));
@@ -99,6 +104,7 @@ public class BlockListener implements Listener {
         if (bbe.isCancelled()) {
             block.getDrops().clear();
         }
+        
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
