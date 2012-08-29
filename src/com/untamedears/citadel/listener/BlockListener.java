@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -165,15 +166,25 @@ public class BlockListener implements Listener {
         boolean wasprotected = maybeReinforcementDamaged(bbe.getBlock());
     	if (wasprotected) {
             bbe.setCancelled(wasprotected);
+
             Block block = bbe.getBlock();
+            block.getWorld().playEffect(block.getLocation(), Effect.EXTINGUISH, 0);
             Block rblock;
             // super aggressive fire protection! suppress all fire within a 5 block cube around the fire
             for(int x = -2; x <= 2; x++) {
             	for(int y = -2; y <= 2; y++) {
             		for(int z = -2; z <= 2; z++) {
             			rblock = block.getRelative(x,y,z);
-            			if(rblock.getType() == Material.FIRE) {
+            			
+            			switch(rblock.getType()) {
+            			case FIRE:
             				rblock.setType(Material.AIR);
+            				break;
+            				
+            			case LAVA:
+            			case STATIONARY_LAVA:
+            				rblock.setType(Material.COBBLESTONE);
+            				break;
             			}
             		}
             	}
