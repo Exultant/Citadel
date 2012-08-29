@@ -160,33 +160,25 @@ public class BlockListener implements Listener {
 		}
     }
     
-    private static final Material matfire = Material.FIRE;
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void blockBurn(BlockBurnEvent bbe) {
         boolean wasprotected = maybeReinforcementDamaged(bbe.getBlock());
     	if (wasprotected) {
             bbe.setCancelled(wasprotected);
-	    Block block = bbe.getBlock();
-            // Basic essential fire protection
-            if (block.getRelative(0,1,0).getType() == matfire) {block.getRelative(0,1,0).setTypeId(0);} // Essential
-            // Extended fire protection (recommend)
-            if (block.getRelative(1,0,0).getType() == matfire) {block.getRelative(1,0,0).setTypeId(0);}
-            if (block.getRelative(-1,0,0).getType() == matfire) {block.getRelative(-1,0,0).setTypeId(0);}
-            if (block.getRelative(0,-1,0).getType() == matfire) {block.getRelative(0,-1,0).setTypeId(0);}
-            if (block.getRelative(0,0,1).getType() == matfire) {block.getRelative(0,0,1).setTypeId(0);}
-            if (block.getRelative(0,0,-1).getType() == matfire) {block.getRelative(0,0,-1).setTypeId(0);}
-            // Aggressive fire protection (would seriously reduce effectiveness of flint down to near the "you'd have to use it 25 times" mentality)
-            /*
-            if (block.getRelative(1,1,0).getType() == matfire) {block.getRelative(1,1,0).setTypeId(0);}
-            if (block.getRelative(1,-1,0).getType() == matfire) {block.getRelative(1,-1,0).setTypeId(0);}
-            if (block.getRelative(-1,1,0).getType() == matfire) {block.getRelative(-1,1,0).setTypeId(0);}
-            if (block.getRelative(-1,-1,0).getType() == matfire) {block.getRelative(-1,-1,0).setTypeId(0);}
-            if (block.getRelative(0,1,1).getType() == matfire) {block.getRelative(0,1,1).setTypeId(0);}
-            if (block.getRelative(0,-1,1).getType() == matfire) {block.getRelative(0,-1,1).setTypeId(0);}
-            if (block.getRelative(0,1,-1).getType() == matfire) {block.getRelative(0,1,-1).setTypeId(0);}
-            if (block.getRelative(0,-1,-1).getType() == matfire) {block.getRelative(0,-1,-1).setTypeId(0);}
-            */
-	}
+            Block block = bbe.getBlock();
+            Block rblock;
+            // super aggressive fire protection! suppress all fire within a 5 block cube around the fire
+            for(int x = -2; x <= 2; x++) {
+            	for(int y = -2; y <= 2; y++) {
+            		for(int z = -2; z <= 2; z++) {
+            			rblock = block.getRelative(x,y,z);
+            			if(rblock.getType() == Material.FIRE) {
+            				rblock.setType(Material.AIR);
+            			}
+            		}
+            	}
+            }
+        }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
