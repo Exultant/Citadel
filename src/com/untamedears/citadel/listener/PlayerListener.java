@@ -133,7 +133,6 @@ public class PlayerListener implements Listener {
               pie.setCancelled(true);
         	}
         }
-        if (pie.isCancelled()) return;
 
         PlayerState state = PlayerState.get(player);
         PlacementMode placementMode = state.getMode();
