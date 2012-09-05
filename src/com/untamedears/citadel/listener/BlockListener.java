@@ -196,14 +196,20 @@ public class BlockListener implements Listener {
        Material changedType = bpe.getChangedType();
        if (Material.LAVA == changedType) {
            Block block = bpe.getBlock();
-           // Protection for reinforced rails types from lava. Similar to water, transform surrounding blocks in cobblestone to stop the lava effect.
+           // Protection for reinforced rails types from lava. Similar to water, transform surrounding blocks in cobblestone or obsidian to stop the lava effect.
            if (Material.RAILS == block.getType() || Material.POWERED_RAIL == block.getType() || Material.DETECTOR_RAIL == block.getType()) {
                boolean isReinforced = maybeReinforcementDamaged(block);
                if (isReinforced) {
-                   for (BlockFace blockFace : new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH}) {
+                   for (final BlockFace blockFace : new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH}) {
                        Block otherBlock = block.getRelative(blockFace);
                        if (Material.LAVA == otherBlock.getType()) {
-                           otherBlock.setType(Material.COBBLESTONE);
+                    	   if (otherBlock.getData() == 0) {
+                    		   // Lava type block returning getData == 0 are lava source blocks. 
+                    		   otherBlock.setType(Material.OBSIDIAN);
+                    	   } else {
+                    		   // Lava type block returning getData != 0 are runoff lava blocks.
+                    		   otherBlock.setType(Material.COBBLESTONE);
+                    	   }
                            otherBlock.getWorld().playEffect(otherBlock.getLocation(), Effect.EXTINGUISH, 0);
                        }
                    }
