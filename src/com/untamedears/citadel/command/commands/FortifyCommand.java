@@ -46,8 +46,8 @@ public class FortifyCommand extends PlayerCommand {
 		}
 		if(secLevel != null && secLevel.equalsIgnoreCase("group")){
 			if(groupName == null || groupName.isEmpty() || groupName.equals("")){
-				sender.sendMessage(new StringBuilder().append("You must specify a group in group fortification mode").toString());
-				sender.sendMessage(new StringBuilder().append("Usage: ").append("/ctfortify group <group-name>").toString());
+				sender.sendMessage("You must specify a group in group fortification mode");
+				sender.sendMessage("Usage: " + "/ctfortify group <group-name>");
 				return true;
 			}
 			GroupManager groupManager = Citadel.getGroupManager();

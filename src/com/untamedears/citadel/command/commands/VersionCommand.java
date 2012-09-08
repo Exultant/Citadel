@@ -21,7 +21,7 @@ public class VersionCommand extends PlayerCommand {
 
 	public boolean execute(CommandSender sender, String[] args) {
 		String version = Citadel.getPlugin().getDescription().getVersion();
-		sender.sendMessage(new StringBuilder().append("Citadel Version: " ).append(version).toString());
+		sender.sendMessage("Citadel Version: " + version);
 		return true;
 	}
 

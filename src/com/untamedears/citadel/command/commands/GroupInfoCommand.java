@@ -33,20 +33,20 @@ public class GroupInfoCommand extends PlayerCommand {
 			sendMessage(sender, ChatColor.RED, "Invalid permission to access this group");
 			return true;
 		}
-		sender.sendMessage(new StringBuilder().append("Group Name: ").append(groupName).toString());
-		sender.sendMessage(new StringBuilder().append("Owner: ").append(group.getFounder()).toString());
-		sender.sendMessage(new StringBuilder().append("Moderators: ").append(groupManager.getModeratorsOfGroup(groupName).size()).toString());
-		sender.sendMessage(new StringBuilder().append("Members: ").append(groupManager.getMembersOfGroup(groupName).size()).toString());
+		sender.sendMessage("Group Name: " + groupName);
+		sender.sendMessage("Owner: " + group.getFounder());
+		sender.sendMessage("Moderators: " + groupManager.getModeratorsOfGroup(groupName).size());
+		sender.sendMessage("Members: " + groupManager.getMembersOfGroup(groupName).size());
 		if(group.isFounder(senderName) || group.isModerator(senderName)){
 			String password = group.getPassword();
-			sender.sendMessage(new StringBuilder().append("Password: ").append(password).toString());
-			String joinable = "";
+			sender.sendMessage("Password: " + password);
+			String joinable;
 			if(password != null && !password.equalsIgnoreCase("null")){
 				joinable = "Yes";
 			} else {
 				joinable = "No";
 			}
-			sender.sendMessage(new StringBuilder().append("Joinable: ").append(joinable).toString());
+			sender.sendMessage("Joinable: " + joinable);
 		}
 		return true;
 	}

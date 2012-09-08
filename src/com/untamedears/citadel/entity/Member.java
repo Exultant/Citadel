@@ -46,22 +46,17 @@ public class Member implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = 31 * memberName.hashCode();
-        return result;
+        return 31 * memberName.hashCode();
     }
     
     public Faction getPersonalGroup(){
     	PersonalGroup personalGroup = Citadel.getPersonalGroupManager().getPersonalGroup(this.memberName);
     	String personalGroupName = personalGroup.getGroupName();
-    	Faction group = Citadel.getGroupManager().getGroup(personalGroupName);
-    	return group;
+    	return Citadel.getGroupManager().getGroup(personalGroupName);
     }
     
     public boolean hasPersonalGroup(){
-    	if(getPersonalGroup() != null){
-    		return true;
-    	}
-    	return false;
+        return getPersonalGroup() != null;
     }
     
 	public Set<Faction> getGroups() {

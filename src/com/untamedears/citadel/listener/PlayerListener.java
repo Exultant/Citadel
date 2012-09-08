@@ -150,7 +150,7 @@ public class PlayerListener implements Listener {
                     if(reinforcement.isAccessible(player)){
                     	Faction group = reinforcement.getOwner();
                     	String groupName = group.getName();
-                    	String message = "";
+                    	String message;
                     	if(group.isPersonalGroup()){
                     		message = String.format("%s, security: %s, group: %s (Default Group)", reinforcementStatus, securityLevel, groupName);
                     	} else {

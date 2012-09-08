@@ -74,11 +74,8 @@ public class MemberManager {
 	}
 	
 	public boolean hasMember(Player player){
-		if(this.storage.getMember(player.getDisplayName()) != null){
-			return true;
-		}
-		return false;
-	}
+        return this.storage.getMember(player.getDisplayName()) != null;
+    }
 	
 	public Member getMember(Player player){
 		return getMember(player.getName());
