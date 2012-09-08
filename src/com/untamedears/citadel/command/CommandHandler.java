@@ -37,7 +37,7 @@ public class CommandHandler {
 			if(cmd == null){
 				continue;
 			}
-			String[] realArgs = (String[])Arrays.copyOfRange(args, argsIncluded, args.length);
+			String[] realArgs = Arrays.copyOfRange(args, argsIncluded, args.length);
 			
 			if(!cmd.isInProgress(sender)){
 				if((realArgs.length < cmd.getMinArguments()) || (realArgs.length > cmd.getMaxArguments())){
@@ -61,15 +61,15 @@ public class CommandHandler {
 	}
 	
 	private void displayCommandHelp(Command cmd, CommandSender sender){
-		sender.sendMessage(new StringBuilder().append("§cCommand:§e " ).append(cmd.getName()).toString());
-		sender.sendMessage(new StringBuilder().append("§cDescription:§e " ).append(cmd.getDescription()).toString());
-		sender.sendMessage(new StringBuilder().append("§cUsage:§e ").append(cmd.getUsage()).toString());
+		sender.sendMessage("Command: " + cmd.getName());
+		sender.sendMessage("Description: " + cmd.getDescription());
+		sender.sendMessage("Usage: " + cmd.getUsage());
 	}
 
 	private Command getCmdFromIdent(String ident, CommandSender executor) {
 		ident = ident.toLowerCase();
 		if(this.identifiers.containsKey(ident)){
-			return (Command)this.identifiers.get(ident);
+			return this.identifiers.get(ident);
 		}
 		
 		for(Command cmd : this.commands.values()){

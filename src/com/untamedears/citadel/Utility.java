@@ -32,11 +32,10 @@ import com.untamedears.citadel.entity.ReinforcementMaterial;
  */
 public class Utility {
 
-    private static Map<SecurityLevel, MaterialData> securityMaterial;
     private static Random rng = new Random();
     
     static {
-        securityMaterial = new HashMap<SecurityLevel, MaterialData>();
+        Map<SecurityLevel, MaterialData> securityMaterial = new HashMap<SecurityLevel, MaterialData>();
         securityMaterial.put(SecurityLevel.PUBLIC, new Wool(DyeColor.GREEN));
         securityMaterial.put(SecurityLevel.GROUP, new Wool(DyeColor.YELLOW));
         securityMaterial.put(SecurityLevel.PRIVATE, new Wool(DyeColor.RED));

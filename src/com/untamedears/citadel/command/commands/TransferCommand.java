@@ -22,7 +22,7 @@ public class TransferCommand extends PlayerCommand {
 	public TransferCommand() {
 		super("Transfer Group");
 		setDescription("Transfers a group to another player. WARNING: You lose reinforcements associated with this group. This cannot be undone.");
-		setUsage("/cttransfer §8<group-name> <player-name>");
+		setUsage("/cttransfer <group-name> <player-name>");
 		setArgumentRange(2, 2);
 		setIdentifiers(new String[] {"cttransfer", "ctt"});
 	}

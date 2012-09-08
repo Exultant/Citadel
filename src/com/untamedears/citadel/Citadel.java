@@ -224,7 +224,7 @@ public class Citadel extends JavaPlugin {
       {
         sw.close();
       }
-      catch(IOException e)
+      catch(IOException ignored)
       {
       }
       

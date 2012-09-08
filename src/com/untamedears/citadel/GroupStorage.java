@@ -75,11 +75,8 @@ public class GroupStorage {
 	}
 
 	public boolean isGroup(String groupName) {
-		if(this.dao.findGroup(groupName) != null){
-			return true;
-		}
-		return false;
-	}
+        return this.dao.findGroup(groupName) != null;
+    }
 	
 	public boolean hasGroupModerator(String groupName, String memberName){
 		return this.dao.hasGroupModerator(groupName, memberName);

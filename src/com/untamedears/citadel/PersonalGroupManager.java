@@ -40,9 +40,6 @@ public class PersonalGroupManager {
 	}
 	
 	public boolean hasPersonalGroup(String memberName){
-		if(getPersonalGroup(memberName) != null){
-			return true;
-		}
-		return false;
-	}
+        return getPersonalGroup(memberName) != null;
+    }
 }

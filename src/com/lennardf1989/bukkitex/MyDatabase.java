@@ -184,16 +184,15 @@ public abstract class MyDatabase {
         boolean databaseExists = false;
 
         List<Class<?>> classes = getDatabaseClasses();
-        for (int i = 0; i < classes.size(); i++) {
+        for (Class<?> aClass : classes) {
             try {
                 //Do a simple query which only throws an exception if the table does not exist
-                ebeanServer.find(classes.get(i)).findRowCount();
+                ebeanServer.find(aClass).findRowCount();
 
                 //Query passed without throwing an exception, a database therefore already exists
                 databaseExists = true;
                 break;
-            } 
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 //Do nothing
             }
         }

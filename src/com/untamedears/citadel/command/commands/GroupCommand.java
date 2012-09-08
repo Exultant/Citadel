@@ -23,7 +23,7 @@ public class GroupCommand extends PlayerCommand {
 	public GroupCommand() {
 		super("Group Mode");
 		setDescription("Toggle group mode");
-		setUsage("/ctgroup §8<group-name>");
+		setUsage("/ctgroup <group-name>");
 		setArgumentRange(1,1);
 		setIdentifiers(new String[] {"ctgroup", "ctg"});
 	}

@@ -25,6 +25,7 @@ public abstract interface Command {
 	
 	public abstract boolean isIdentifier(CommandSender sender, String input);
 	
-	public abstract boolean isInProgress(CommandSender sender);
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    public abstract boolean isInProgress(CommandSender sender);
 
 }

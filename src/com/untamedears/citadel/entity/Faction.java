@@ -58,10 +58,7 @@ public class Faction implements Serializable {
     }
     
     public boolean isFounder(Member member){
-    	if(member.getMemberName().equalsIgnoreCase(this.founder)){
-    		return true;
-    	}
-    	return false;
+        return member.getMemberName().equalsIgnoreCase(this.founder);
     }
 
     public boolean isMember(String memberName) {
@@ -74,10 +71,7 @@ public class Faction implements Serializable {
     
     public boolean isPersonalGroup(){
     	PersonalGroup personalGroup = Citadel.getPersonalGroupManager().getPersonalGroup(this.founder);
-    	if(personalGroup != null && personalGroup.getGroupName().equals(this.name)){
-    		return true;
-    	}
-    	return false;
+        return personalGroup != null && personalGroup.getGroupName().equals(this.name);
     }
 
     @Override

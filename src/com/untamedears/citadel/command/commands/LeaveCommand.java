@@ -22,7 +22,7 @@ public class LeaveCommand extends PlayerCommand {
 	public LeaveCommand() {
 		super("Leave");
         setDescription("Leave a group");
-        setUsage("/ctleave §8<group-name>");
+        setUsage("/ctleave <group-name>");
         setArgumentRange(1,1);
 		setIdentifiers(new String[] {"ctleave", "ctl"});
 	}
