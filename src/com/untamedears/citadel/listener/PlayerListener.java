@@ -94,7 +94,7 @@ public class PlayerListener implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void bucketEmpty(PlayerBucketEmptyEvent pbee) {
        Material bucket = pbee.getBucket();
-       if (Material.LAVA_BUCKET == bucket) {
+       if (Material.LAVA_BUCKET == bucket || Material.WATER_BUCKET == bucket) {
            Block block = pbee.getBlockClicked();
            BlockFace face = pbee.getBlockFace();
            Block relativeBlock = block.getRelative(face);
@@ -133,7 +133,6 @@ public class PlayerListener implements Listener {
               pie.setCancelled(true);
         	}
         }
-        if (pie.isCancelled()) return;
 
         PlayerState state = PlayerState.get(player);
         PlacementMode placementMode = state.getMode();
