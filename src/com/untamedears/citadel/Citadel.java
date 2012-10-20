@@ -7,12 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.untamedears.citadel.access.AccessDelegate;
 import com.untamedears.citadel.command.CommandHandler;
 import com.untamedears.citadel.command.commands.AddModCommand;
 import com.untamedears.citadel.command.commands.AllowCommand;
@@ -236,5 +238,14 @@ public class Citadel extends JavaPlugin {
       
       severe("          ======= SNIP HERE =======");
       severe("");
+    }
+    
+    public boolean playerCanAccessBlock(Block block, String name) {
+        AccessDelegate accessDelegate = AccessDelegate.getDelegate(block);
+        Reinforcement reinforcement = accessDelegate.getReinforcement();
+        
+    	if (reinforcement == null)
+    		return true;
+    	return reinforcement.isAccessible(name);
     }
 }
