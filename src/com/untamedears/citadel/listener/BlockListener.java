@@ -224,8 +224,10 @@ public class BlockListener implements Listener {
                if (isReinforced) {
                    for (final BlockFace blockFace : new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH}) {
                        Block otherBlock = block.getRelative(blockFace);
-                       otherBlock.setType(Material.COBBLESTONE);
-                       otherBlock.getWorld().playEffect(otherBlock.getLocation(), Effect.EXTINGUISH, 0);
+                       if (Material.LAVA == otherBlock.getType() || Material.WATER == otherBlock.getType()) {
+                    	   otherBlock.setType(Material.COBBLESTONE);
+                    	   otherBlock.getWorld().playEffect(otherBlock.getLocation(), Effect.EXTINGUISH, 0);
+                       }
                    }
                }
            }
