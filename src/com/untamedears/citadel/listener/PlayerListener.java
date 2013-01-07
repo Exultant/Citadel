@@ -108,7 +108,7 @@ public class PlayerListener implements Listener {
        }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGH)
     public void interact(PlayerInteractEvent pie) {
     	try {
         if (!pie.hasBlock()) return;
