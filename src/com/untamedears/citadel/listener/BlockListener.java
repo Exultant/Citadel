@@ -6,6 +6,7 @@ import static com.untamedears.citadel.Utility.maybeReinforcementDamaged;
 import static com.untamedears.citadel.Utility.reinforcementBroken;
 import static com.untamedears.citadel.Utility.reinforcementDamaged;
 import static com.untamedears.citadel.Utility.sendMessage;
+import static com.untamedears.citadel.Utility.damagePlayerTool;
 
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
@@ -45,6 +46,8 @@ import com.untamedears.citadel.entity.IReinforcement;
 import com.untamedears.citadel.entity.NaturalReinforcement;
 import com.untamedears.citadel.entity.PlayerReinforcement;
 import com.untamedears.citadel.entity.ReinforcementMaterial;
+
+import net.sacredlabyrinth.Phaed.PreciousStones.PreciousStones;
 
 public class BlockListener implements Listener {
 
@@ -94,7 +97,11 @@ public class BlockListener implements Listener {
         if (reinforcement == null) {
             reinforcement = createNaturalReinforcement(block);
             if (reinforcement != null && reinforcementDamaged(reinforcement)) {
-                bbe.setCancelled(true);
+            	if (block != null && player != null) {
+            		PreciousStones.getInstance().getSnitchManager().recordSnitchBlockBreak(player, block);
+            	}
+            	damagePlayerTool(player);
+            	bbe.setCancelled(true);
                 block.getDrops().clear();
             }
 	        return;
@@ -120,7 +127,11 @@ public class BlockListener implements Listener {
         }
 
         if (is_cancelled) {
-            bbe.setCancelled(true);
+        	if (block != null && player != null) {
+        		PreciousStones.getInstance().getSnitchManager().recordSnitchBlockBreak(player, block);
+        	}
+        	damagePlayerTool(player);
+        	bbe.setCancelled(true);
             block.getDrops().clear();
         }
     }
