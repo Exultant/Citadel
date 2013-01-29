@@ -14,6 +14,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
@@ -138,13 +139,11 @@ public class Utility {
     		return;
     	}
     	
-    	final ItemStack hand = player.getItemInHand();
-    	
-    	if(hand == null) {
+    	if(player.getItemInHand() == null) {
     		return;
     	}
     	
-    	switch(hand.getType()) {
+    	switch(player.getItemInHand().getType()) {
     	case WOOD_PICKAXE:
     	case WOOD_AXE:
     	case WOOD_SPADE:
@@ -164,12 +163,18 @@ public class Utility {
     	case DIAMOND_PICKAXE:
     	case DIAMOND_AXE:
     	case DIAMOND_SPADE:
-    		hand.setDurability((short)(hand.getDurability() + 1)); // not sure why this is backwards, but it is
     		Bukkit.getScheduler().scheduleSyncDelayedTask(Citadel.getPlugin(), new Runnable() {
     			public void run() {
-    				player.setItemInHand(hand.getDurability() > hand.getType().getMaxDurability() ? null : hand);
+    		    	ItemStack hand = player.getItemInHand();
+    		    	
+    		    	int unbreak = hand.getEnchantmentLevel(Enchantment.DURABILITY);
+    		    	if(rng.nextDouble() < 1/(unbreak+1))
+    		    	{
+    		    		hand.setDurability((short)(hand.getDurability() + 1)); // not sure why this is backwards, but it is
+    		    		player.setItemInHand(hand.getDurability() > hand.getType().getMaxDurability() ? null : hand);
+    		    	}
     			}
-    		}, 1);
+    		}, 0);
     	}
     }
 
