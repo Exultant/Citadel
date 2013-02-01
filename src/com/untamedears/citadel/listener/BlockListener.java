@@ -6,6 +6,7 @@ import static com.untamedears.citadel.Utility.maybeReinforcementDamaged;
 import static com.untamedears.citadel.Utility.reinforcementBroken;
 import static com.untamedears.citadel.Utility.reinforcementDamaged;
 import static com.untamedears.citadel.Utility.sendMessage;
+import static com.untamedears.citadel.Utility.damagePlayerTool;
 
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
@@ -45,6 +46,8 @@ import com.untamedears.citadel.entity.IReinforcement;
 import com.untamedears.citadel.entity.NaturalReinforcement;
 import com.untamedears.citadel.entity.PlayerReinforcement;
 import com.untamedears.citadel.entity.ReinforcementMaterial;
+
+import net.sacredlabyrinth.Phaed.PreciousStones.PreciousStones;
 
 public class BlockListener implements Listener {
 
@@ -94,7 +97,11 @@ public class BlockListener implements Listener {
         if (reinforcement == null) {
             reinforcement = createNaturalReinforcement(block);
             if (reinforcement != null && reinforcementDamaged(reinforcement)) {
-                bbe.setCancelled(true);
+            	if (block != null && player != null) {
+            		PreciousStones.getInstance().getSnitchManager().recordSnitchBlockBreak(player, block);
+            	}
+            	damagePlayerTool(player);
+            	bbe.setCancelled(true);
                 block.getDrops().clear();
             }
 	        return;
@@ -120,7 +127,11 @@ public class BlockListener implements Listener {
         }
 
         if (is_cancelled) {
-            bbe.setCancelled(true);
+        	if (block != null && player != null) {
+        		PreciousStones.getInstance().getSnitchManager().recordSnitchBlockBreak(player, block);
+        	}
+        	damagePlayerTool(player);
+        	bbe.setCancelled(true);
             block.getDrops().clear();
         }
     }
@@ -184,49 +195,49 @@ public class BlockListener implements Listener {
 		}
     }
     
-    private static final Material matfire = Material.FIRE;
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void blockBurn(BlockBurnEvent bbe) {
         boolean wasprotected = maybeReinforcementDamaged(bbe.getBlock());
     	if (wasprotected) {
             bbe.setCancelled(wasprotected);
-	    Block block = bbe.getBlock();
-            // Basic essential fire protection
-            if (block.getRelative(0,1,0).getType() == matfire) {block.getRelative(0,1,0).setTypeId(0);} // Essential
-            // Extended fire protection (recommend)
-            if (block.getRelative(1,0,0).getType() == matfire) {block.getRelative(1,0,0).setTypeId(0);}
-            if (block.getRelative(-1,0,0).getType() == matfire) {block.getRelative(-1,0,0).setTypeId(0);}
-            if (block.getRelative(0,-1,0).getType() == matfire) {block.getRelative(0,-1,0).setTypeId(0);}
-            if (block.getRelative(0,0,1).getType() == matfire) {block.getRelative(0,0,1).setTypeId(0);}
-            if (block.getRelative(0,0,-1).getType() == matfire) {block.getRelative(0,0,-1).setTypeId(0);}
-            // Aggressive fire protection (would seriously reduce effectiveness of flint down to near the "you'd have to use it 25 times" mentality)
-            /*
-            if (block.getRelative(1,1,0).getType() == matfire) {block.getRelative(1,1,0).setTypeId(0);}
-            if (block.getRelative(1,-1,0).getType() == matfire) {block.getRelative(1,-1,0).setTypeId(0);}
-            if (block.getRelative(-1,1,0).getType() == matfire) {block.getRelative(-1,1,0).setTypeId(0);}
-            if (block.getRelative(-1,-1,0).getType() == matfire) {block.getRelative(-1,-1,0).setTypeId(0);}
-            if (block.getRelative(0,1,1).getType() == matfire) {block.getRelative(0,1,1).setTypeId(0);}
-            if (block.getRelative(0,-1,1).getType() == matfire) {block.getRelative(0,-1,1).setTypeId(0);}
-            if (block.getRelative(0,1,-1).getType() == matfire) {block.getRelative(0,1,-1).setTypeId(0);}
-            if (block.getRelative(0,-1,-1).getType() == matfire) {block.getRelative(0,-1,-1).setTypeId(0);}
-            */
+            Block block = bbe.getBlock();
+            Block rblock;
+            // super aggressive fire protection! suppress all fire within a 5 block cube around the fire
+            for(int x = -2; x <= 2; x++) {
+            	for(int y = -2; y <= 2; y++) {
+            		for(int z = -2; z <= 2; z++) {
+            			rblock = block.getRelative(x,y,z);
+            			switch(rblock.getType()) {
+            				case FIRE:
+            					rblock.setType(Material.AIR);
+            					break;
+
+            				case LAVA:
+            				case STATIONARY_LAVA:
+            					rblock.setType(Material.COBBLESTONE);
+            					break;
+            			}
+            		}
+            	}
+            }
+    	}
 	}
-    }
+
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void blockPhysics(BlockPhysicsEvent bpe) {
        Material changedType = bpe.getChangedType();
-       if (Material.LAVA == changedType) {
+       if (Material.LAVA == changedType || Material.WATER == changedType) {
            Block block = bpe.getBlock();
-           // Protection for reinforced rails types from lava. Similar to water, transform surrounding blocks in cobblestone to stop the lava effect.
+           // Protection for reinforced rails types from lava and water. Similar to water/lava, transform surrounding blocks in cobblestone or obsidian to stop the lava/water effect.
            if (Material.RAILS == block.getType() || Material.POWERED_RAIL == block.getType() || Material.DETECTOR_RAIL == block.getType()) {
                boolean isReinforced = maybeReinforcementDamaged(block);
                if (isReinforced) {
-                   for (BlockFace blockFace : new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH}) {
+                   for (final BlockFace blockFace : new BlockFace[]{BlockFace.DOWN, BlockFace.UP, BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH}) {
                        Block otherBlock = block.getRelative(blockFace);
-                       if (Material.LAVA == otherBlock.getType()) {
-                           otherBlock.setType(Material.COBBLESTONE);
-                           otherBlock.getWorld().playEffect(otherBlock.getLocation(), Effect.EXTINGUISH, 0);
+                       if (Material.LAVA == otherBlock.getType() || Material.WATER == otherBlock.getType()) {
+                    	   otherBlock.setType(Material.COBBLESTONE);
+                    	   otherBlock.getWorld().playEffect(otherBlock.getLocation(), Effect.EXTINGUISH, 0);
                        }
                    }
                }

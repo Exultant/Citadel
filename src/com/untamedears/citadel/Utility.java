@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
@@ -13,6 +14,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
@@ -68,12 +70,12 @@ public class Utility {
         return nr;
     }
 
-    public static IReinforcement createPlayerReinforcement(Player player, Block block) {
+    public static IReinforcement createPlayerReinforcement(final Player player, Block block) {
         int blockTypeId = block.getTypeId();
         if (PlayerReinforcement.NON_REINFORCEABLE.contains(blockTypeId)) return null;
 
         PlayerState state = PlayerState.get(player);
-        ReinforcementMaterial material;
+        final ReinforcementMaterial material;
         switch (state.getMode()) {
             case REINFORCEMENT:
             case REINFORCEMENT_SINGLE_BLOCK:
@@ -101,9 +103,15 @@ public class Utility {
         			sendMessage(player, ChatColor.RED, "You don't seem to have a personal group. Try logging out and back in first");
         		}
         	}
-            player.getInventory().removeItem(material.getRequiredMaterials());
-            //TODO: there will eventually be a better way to flush inventory changes to the client
-            player.updateInventory();
+        	
+    		Bukkit.getScheduler().scheduleSyncDelayedTask(Citadel.getPlugin(), new Runnable() {
+    			public void run() {
+    				player.getInventory().removeItem(material.getRequiredMaterials());
+    				//TODO: there will eventually be a better way to flush inventory changes to the client
+    				player.updateInventory();
+    			}
+    		}, 1);
+
             PlayerReinforcement reinforcement = new PlayerReinforcement(block, material, group, state.getSecurityLevel());
             reinforcement = (PlayerReinforcement)Citadel.getReinforcementManager().addReinforcement(reinforcement);
             String securityLevelText = state.getSecurityLevel().name();
@@ -111,8 +119,8 @@ public class Utility {
             	securityLevelText = securityLevelText + "-" + state.getFaction().getName();
             }
             sendThrottledMessage(player, ChatColor.GREEN, "Reinforced with %s at security level %s", material.getMaterial().name(), securityLevelText);
-            Citadel.warning(String.format("PlRein:%s:%d@%s,%d,%d,%d",
-                player.getName(), material.getMaterialId(), block.getWorld().getName(), block.getX(), block.getY(), block.getZ()));
+            //Citadel.warning(String.format("PlRein:%s:%d@%s,%d,%d,%d",
+            //    player.getName(), material.getMaterialId(), block.getWorld().getName(), block.getX(), block.getY(), block.getZ()));
             // TODO: enable chained flashers, they're pretty cool
             //new BlockFlasher(block, material.getFlasher()).start(getPlugin());
             //new BlockFlasher(block, material.getFlasher()).chain(securityMaterial.get(state.getSecurityLevel())).start();
@@ -124,6 +132,50 @@ public class Utility {
     
     public static void sendMessage(CommandSender sender, ChatColor color, String messageFormat, Object... params) {
         sender.sendMessage(color + String.format(messageFormat, params));
+    }
+    
+    public static void damagePlayerTool(final Player player) {
+    	if(player == null) {
+    		return;
+    	}
+    	
+    	if(player.getItemInHand() == null) {
+    		return;
+    	}
+    	
+    	switch(player.getItemInHand().getType()) {
+    	case WOOD_PICKAXE:
+    	case WOOD_AXE:
+    	case WOOD_SPADE:
+
+    	case GOLD_PICKAXE:
+    	case GOLD_AXE:
+    	case GOLD_SPADE:
+
+    	case STONE_PICKAXE:
+    	case STONE_AXE:
+    	case STONE_SPADE:
+
+    	case IRON_PICKAXE:
+    	case IRON_AXE:
+    	case IRON_SPADE:
+
+    	case DIAMOND_PICKAXE:
+    	case DIAMOND_AXE:
+    	case DIAMOND_SPADE:
+    		Bukkit.getScheduler().scheduleSyncDelayedTask(Citadel.getPlugin(), new Runnable() {
+    			public void run() {
+    		    	ItemStack hand = player.getItemInHand();
+    		    	
+    		    	int unbreak = hand.getEnchantmentLevel(Enchantment.DURABILITY);
+    		    	if(rng.nextDouble() < 1/(unbreak+1))
+    		    	{
+    		    		hand.setDurability((short)(hand.getDurability() + 1)); // not sure why this is backwards, but it is
+    		    		player.setItemInHand(hand.getDurability() > hand.getType().getMaxDurability() ? null : hand);
+    		    	}
+    			}
+    		}, 0);
+    	}
     }
 
     public static void sendThrottledMessage(CommandSender sender, ChatColor color, String messageFormat, Object... params) {

@@ -80,7 +80,12 @@ public class CitadelDao extends MyDatabase {
     }
 
     public Object save(Object object) {
-        getDatabase().save(object);
+        try {
+        	getDatabase().save(object);
+        }
+        catch(PersistenceException e) {
+        	// probably placing fortified block where fortified air already exists
+        }
         return object;
     }
 
