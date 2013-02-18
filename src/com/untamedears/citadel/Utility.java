@@ -90,44 +90,64 @@ public class Utility {
             case FORTIFICATION:
                 material = state.getReinforcementMaterial();
                 break;
+            case NORMAL:
+            	material = ReinforcementMaterial.get(Material.AIR);
+            	break;
             default:
                 return null;
         }
 
-        if (player.getInventory().contains(material.getMaterial(), material.getRequirements())) {
-        	Faction group = state.getFaction();
-        	if(group == null){
-        		try {
-        		group = Citadel.getMemberManager().getMember(player.getDisplayName()).getPersonalGroup();
-        		} catch (NullPointerException e){
-        			sendMessage(player, ChatColor.RED, "You don't seem to have a personal group. Try logging out and back in first");
-        		}
-        	}
-        	
-    		Bukkit.getScheduler().scheduleSyncDelayedTask(Citadel.getPlugin(), new Runnable() {
-    			public void run() {
-    				player.getInventory().removeItem(material.getRequiredMaterials());
-    				//TODO: there will eventually be a better way to flush inventory changes to the client
-    				player.updateInventory();
-    			}
-    		}, 1);
+    	// get group
+        Faction group = state.getFaction();
+    	if(group == null){
+    		try {
+    		group = Citadel.getMemberManager().getMember(player.getDisplayName()).getPersonalGroup();
+    		} catch (NullPointerException e){
+    			sendMessage(player, ChatColor.RED, "You don't seem to have a personal group. Try logging out and back in first");
+    			return null;
+    		}
+    	}
 
-            PlayerReinforcement reinforcement = new PlayerReinforcement(block, material, group, state.getSecurityLevel());
-            reinforcement = (PlayerReinforcement)Citadel.getReinforcementManager().addReinforcement(reinforcement);
-            String securityLevelText = state.getSecurityLevel().name();
-            if(securityLevelText.equalsIgnoreCase("group")){
-            	securityLevelText = securityLevelText + "-" + state.getFaction().getName();
-            }
-            sendThrottledMessage(player, ChatColor.GREEN, "Reinforced with %s at security level %s", material.getMaterial().name(), securityLevelText);
-            //Citadel.warning(String.format("PlRein:%s:%d@%s,%d,%d,%d",
-            //    player.getName(), material.getMaterialId(), block.getWorld().getName(), block.getX(), block.getY(), block.getZ()));
-            // TODO: enable chained flashers, they're pretty cool
-            //new BlockFlasher(block, material.getFlasher()).start(getPlugin());
-            //new BlockFlasher(block, material.getFlasher()).chain(securityMaterial.get(state.getSecurityLevel())).start();
-            return reinforcement;
-        } else {
-            return null;
+    	// decrement material if its not air 
+    	if(material.getMaterial() != Material.AIR)
+    	{
+	        if (player.getInventory().contains(material.getMaterial(), material.getRequirements()))
+	        {
+	    		Bukkit.getScheduler().scheduleSyncDelayedTask(Citadel.getPlugin(), new Runnable()
+	    		{
+	    			public void run() {
+	    				player.getInventory().removeItem(material.getRequiredMaterials());
+	    				//TODO: there will eventually be a better way to flush inventory changes to the client
+	    				player.updateInventory();
+	    			}
+	    		}, 1);
+	        }
+	        else
+	        {
+	        	return null;
+	        }
+    	}
+
+        // create the reinforcement
+    	PlayerReinforcement reinforcement = new PlayerReinforcement(block, material, group, state.getSecurityLevel());
+        reinforcement = (PlayerReinforcement)Citadel.getReinforcementManager().addReinforcement(reinforcement);
+
+        // inform them if not in normal mode
+        if(state.getMode() != PlacementMode.NORMAL)
+        {
+	        String securityLevelText = state.getSecurityLevel().name();
+	        if(securityLevelText.equalsIgnoreCase("group")){
+	        	securityLevelText = securityLevelText + "-" + state.getFaction().getName();
+	        }
+	        sendThrottledMessage(player, ChatColor.GREEN, String.format("Reinforced with %s at security level %s", material.getMaterial().name(), securityLevelText).replace("with AIR", "by hand"));
         }
+        
+        //Citadel.warning(String.format("PlRein:%s:%d@%s,%d,%d,%d",
+        //    player.getName(), material.getMaterialId(), block.getWorld().getName(), block.getX(), block.getY(), block.getZ()));
+        // TODO: enable chained flashers, they're pretty cool
+        //new BlockFlasher(block, material.getFlasher()).start(getPlugin());
+        //new BlockFlasher(block, material.getFlasher()).chain(securityMaterial.get(state.getSecurityLevel())).start();
+        return reinforcement;
     }
     
     public static void sendMessage(CommandSender sender, ChatColor color, String messageFormat, Object... params) {
@@ -231,7 +251,10 @@ public class Utility {
             if (rng.nextDouble() <= pr.getHealth()) {
                 Location location = pr.getBlock().getLocation();
     	        ReinforcementMaterial material = pr.getMaterial();
-                location.getWorld().dropItem(location, material.getRequiredMaterials());
+                if(material.getMaterial() != Material.AIR)
+                {
+                    location.getWorld().dropItem(location, material.getRequiredMaterials());
+                }
             }
             return pr.isSecurable();
         }

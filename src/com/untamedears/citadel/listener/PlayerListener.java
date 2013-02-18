@@ -177,26 +177,34 @@ public class PlayerListener implements Listener {
                     }
                     createPlayerReinforcement(player, block);
                 } else if (reinforcement.isBypassable(player)) {
-                	boolean update = false;
-                	String message = "";
-                    if (reinforcement.getSecurityLevel() != state.getSecurityLevel()){
-                        reinforcement.setSecurityLevel(state.getSecurityLevel());
-                        update = true;
-                        message = String.format("Changed security level %s", reinforcement.getSecurityLevel().name());
+                    if(reinforcement.getMaterialId() == 0)
+                    {
+                        reinforcementBroken(reinforcement);
+                        createPlayerReinforcement(player, block);
                     }
-                   	if(!reinforcement.getOwner().equals(state.getFaction())) {
-                        reinforcement.setOwner(state.getFaction());
-                        update = true;
-                        if(!message.equals("")){
-                        	message = message + ". ";
+                    else
+                    {
+                        boolean update = false;
+                        String message = "";
+                        if (reinforcement.getSecurityLevel() != state.getSecurityLevel()){
+                            reinforcement.setSecurityLevel(state.getSecurityLevel());
+                            update = true;
+                            message = String.format("Changed security level %s", reinforcement.getSecurityLevel().name());
                         }
-                        if(reinforcement.getSecurityLevel() != SecurityLevel.PRIVATE){
-                        	message = message + String.format("Changed group to %s", state.getFaction().getName());
+                       	if(!reinforcement.getOwner().equals(state.getFaction())) {
+                            reinforcement.setOwner(state.getFaction());
+                            update = true;
+                            if(!message.equals("")){
+                            	message = message + ". ";
+                            }
+                            if(reinforcement.getSecurityLevel() != SecurityLevel.PRIVATE){
+                            	message = message + String.format("Changed group to %s", state.getFaction().getName());
+                            }
                         }
-                    }
-                   	if(update){
-                        Citadel.getReinforcementManager().addReinforcement(reinforcement);
-                        sendMessage(player, ChatColor.GREEN, message);
+                       	if(update){
+                            Citadel.getReinforcementManager().addReinforcement(reinforcement);
+                            sendMessage(player, ChatColor.GREEN, message);
+                        }
                     }
                 } else {
                     sendMessage(player, ChatColor.RED, "You are not permitted to modify this reinforcement");

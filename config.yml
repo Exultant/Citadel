@@ -4,17 +4,22 @@ general:
   autoModeReset: 30
   redstoneDistance: 9
   groupsAllowed: 60
+  reinforceNormal: true
 materials:
+- name: AIR
+  strength: 10
+  requirements: 1
+  flasher: GLASS
 - name: STONE
-  strength: 25
+  strength: 50
   requirements: 1
   flasher: STONE
 - name: IRON_INGOT
-  strength: 250
+  strength: 500
   requirements: 1
   flasher: IRON_BLOCK
 - name: DIAMOND
-  strength: 1800
+  strength: 2500
   requirements: 1
   flasher: DIAMOND_BLOCK
 additionalSecurable:
@@ -22,6 +27,8 @@ additionalSecurable:
 - BOOKSHELF
 - BEACON
 - ANVIL
+- ENDER_CHEST
+- MOB_SPAWNER
 nonReinforceable:
 - SAPLING
 - GRASS

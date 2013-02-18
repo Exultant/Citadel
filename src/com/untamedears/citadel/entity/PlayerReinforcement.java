@@ -182,7 +182,7 @@ public class PlayerReinforcement implements
         return String.format("%s %s with %s",
                 verb,
                 getHealthText(),
-                getMaterial().getMaterial().name());
+                getMaterial().getMaterial().name()).replace(" with AIR", " by hand");
     }
 
     public boolean isAccessible(Player player) {

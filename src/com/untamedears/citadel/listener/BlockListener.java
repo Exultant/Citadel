@@ -60,16 +60,29 @@ public class BlockListener implements Listener {
     public void placeFortifiedBlock(BlockPlaceEvent bpe) {
         Player player = bpe.getPlayer();
         PlayerState state = PlayerState.get(player);
+        Block block = bpe.getBlockPlaced();
 
-        if (state.getMode() != PlacementMode.FORTIFICATION) {
-            // if we are not in fortification mode
-            // cancel event if we are not in normal mode
-            if (state.getMode() == PlacementMode.REINFORCEMENT || state.getMode() == PlacementMode.REINFORCEMENT_SINGLE_BLOCK)
-                bpe.setCancelled(true);
+        switch (state.getMode())
+        {
+        case NORMAL:
+            if(Citadel.getConfigManager().getReinforceNormal() == true)
+            {
+                createPlayerReinforcement(player, block);
+            }
             return;
+
+        case FORTIFICATION:
+            break;
+
+        case REINFORCEMENT:
+        case REINFORCEMENT_SINGLE_BLOCK:
+            bpe.setCancelled(true);
+            return;
+
+       	default:
+       	    return;
         }
 
-        Block block = bpe.getBlockPlaced();
         PlayerInventory inventory = player.getInventory();
 
         ReinforcementMaterial material = state.getReinforcementMaterial();
@@ -111,7 +124,7 @@ public class BlockListener implements Listener {
         if (reinforcement instanceof PlayerReinforcement) {
             PlayerReinforcement pr = (PlayerReinforcement)reinforcement;
             PlayerState state = PlayerState.get(player);
-            if (state.isBypassMode() && pr.isBypassable(player)) {
+            if (pr.isBypassable(player) && (state.isBypassMode() || pr.getMaterialId() == 0)) {
 		    	Citadel.info(player.getDisplayName() + " bypassed reinforcement %s at " 
 		    			+ pr.getBlock().getLocation().toString());
                 is_cancelled = reinforcementBroken(reinforcement);

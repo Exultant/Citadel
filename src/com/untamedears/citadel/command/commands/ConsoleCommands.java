@@ -61,6 +61,9 @@ public class ConsoleCommands extends ConsoleCommand {
         } else if (settingName.equalsIgnoreCase("redstoneDistance")) {
             sendMessage(sender, ChatColor.YELLOW, "redstoneDistance == " + cm.getRedstoneDistance());
 
+        } else if (settingName.equalsIgnoreCase("reinforceNormal")) {
+            sendMessage(sender, ChatColor.YELLOW, "reinforceNormal == " + cm.getReinforceNormal());
+
         } else if (settingName.equalsIgnoreCase("groupsAllowed")) {
             sendMessage(sender, ChatColor.YELLOW, "groupsAllowed == " + cm.getGroupsAllowed());
 
@@ -97,6 +100,9 @@ public class ConsoleCommands extends ConsoleCommand {
 
             } else if (settingName.equalsIgnoreCase("redstoneDistance")) {
                 cm.setRedstoneDistance(Double.parseDouble(value));
+
+            } else if (settingName.equalsIgnoreCase("reinforceNormal")) {
+                cm.setReinforceNormal(Boolean.parseBoolean(value));
 
             } else if (settingName.equalsIgnoreCase("groupsAllowed")) {
                 cm.setGroupsAllowed(Integer.parseInt(value));

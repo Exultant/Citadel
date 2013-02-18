@@ -22,6 +22,7 @@ public class ConfigManager {
 	private int autoModeReset;
 	private boolean verboseLogging;
 	private double redstoneDistance;
+	private boolean reinforceNormal;
 	private int groupsAllowed;
 	private long cacheMaxAge;
 	private int cacheMaxChunks;
@@ -34,6 +35,7 @@ public class ConfigManager {
         autoModeReset = config.getInt("general.autoModeReset");
         verboseLogging = config.getBoolean("general.verboseLogging");
         redstoneDistance = config.getDouble("general.redstoneDistance");
+        reinforceNormal = config.getBoolean("general.reinforceNormal");
         groupsAllowed = config.getInt("general.groupsAllowed");
         cacheMaxAge = config.getLong("caching.max_age");
         cacheMaxChunks = config.getInt("caching.max_chunks");
@@ -87,6 +89,14 @@ public class ConfigManager {
 	
 	public void setRedstoneDistance(double rd){
 		this.redstoneDistance = rd;
+	}
+
+	public boolean getReinforceNormal(){
+		return this.reinforceNormal;
+	}
+
+	public void setReinforceNormal(boolean rn){
+		this.reinforceNormal = rn;
 	}
 	
 	public int getAutoModeReset(){
