@@ -5,6 +5,7 @@ general:
   redstoneDistance: 9
   groupsAllowed: 60
   reinforceNormal: true
+  inaccessibleInfo: false
 materials:
 - name: AIR
   strength: 10

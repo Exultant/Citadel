@@ -23,6 +23,7 @@ public class ConfigManager {
 	private boolean verboseLogging;
 	private double redstoneDistance;
 	private boolean reinforceNormal;
+	private boolean inaccessibleInfo;
 	private int groupsAllowed;
 	private long cacheMaxAge;
 	private int cacheMaxChunks;
@@ -36,6 +37,7 @@ public class ConfigManager {
         verboseLogging = config.getBoolean("general.verboseLogging");
         redstoneDistance = config.getDouble("general.redstoneDistance");
         reinforceNormal = config.getBoolean("general.reinforceNormal");
+        inaccessibleInfo = config.getBoolean("general.inaccessibleInfo");
         groupsAllowed = config.getInt("general.groupsAllowed");
         cacheMaxAge = config.getLong("caching.max_age");
         cacheMaxChunks = config.getInt("caching.max_chunks");
@@ -97,6 +99,14 @@ public class ConfigManager {
 
 	public void setReinforceNormal(boolean rn){
 		this.reinforceNormal = rn;
+	}
+
+	public boolean getInaccessibleInfo(){
+		return this.inaccessibleInfo;
+	}
+
+	public void setInaccessibleInfo(boolean ii){
+		this.inaccessibleInfo = ii;
 	}
 	
 	public int getAutoModeReset(){

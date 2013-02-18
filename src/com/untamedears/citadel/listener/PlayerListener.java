@@ -164,7 +164,14 @@ public class PlayerListener implements Listener {
                     	}
                 		sendMessage(player, ChatColor.GREEN, message);
                     } else {
-                    	sendMessage(player, ChatColor.RED, "%s, security: %s", reinforcementStatus, securityLevel);
+                    	if(Citadel.getConfigManager().getInaccessibleInfo())
+                    	{
+                    		sendMessage(player, ChatColor.RED, "%s, security: %s", reinforcementStatus, securityLevel);
+                    	}
+                    	else
+                    	{
+                    		sendMessage(player, ChatColor.RED, "%s is %s", block.getType().name(), reinforcement.isSecurable() ? "locked" : "reinforced");
+                    	}
                     }
                 }
                 break;
