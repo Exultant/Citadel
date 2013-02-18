@@ -50,7 +50,7 @@ public class PlayerState {
     public void reset() {
         mode = PlacementMode.NORMAL;
         fortificationMaterial = null;
-        securityLevel = SecurityLevel.PUBLIC;
+        securityLevel = SecurityLevel.PRIVATE;
     }
 
     public PlacementMode getMode() {

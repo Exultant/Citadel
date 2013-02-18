@@ -87,7 +87,7 @@ public class BlockListener implements Listener {
 
         ReinforcementMaterial material = state.getReinforcementMaterial();
         ItemStack required = material.getRequiredMaterials();
-        if (inventory.contains(material.getMaterial(), required.getAmount())) {
+        if (material.getMaterialId() == 0 || inventory.contains(material.getMaterial(), required.getAmount())) {
             if (createPlayerReinforcement(player, block) == null) {
                 sendMessage(player, ChatColor.RED, "%s is not a reinforcible material", block.getType().name());
             } else {
