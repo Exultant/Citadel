@@ -12,4 +12,5 @@ public abstract interface IReinforcement extends
     public double getHealth();
     public String getHealthText();
     public String getStatus();
+    public int getMaterialId(); 
 }

@@ -84,6 +84,10 @@ public class NaturalReinforcement implements IReinforcement {
     	return this.id_.compareTo(r.getId());
     }
 
+    public int getMaterialId() {
+        return -1;
+    }
+
     @Override
     public int hashCode() {
         return this.id_.hashCode();

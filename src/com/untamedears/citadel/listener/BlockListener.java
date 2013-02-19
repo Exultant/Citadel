@@ -65,6 +65,7 @@ public class BlockListener implements Listener {
         switch (state.getMode())
         {
         case NORMAL:
+        case INFO:
             if(Citadel.getConfigManager().getReinforceNormal() == true)
             {
                 createPlayerReinforcement(player, block);
@@ -150,34 +151,24 @@ public class BlockListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
-    public void pistonExtend(BlockPistonExtendEvent bpee) {
-    	Block piston = bpee.getBlock();
-		BlockState state = piston.getState();
-		MaterialData data = state.getData();
-		BlockFace direction = null;
-		
-		if (data instanceof PistonBaseMaterial) {
-			direction = ((PistonBaseMaterial) data).getFacing();
-		}
-		
-		// if no direction was found, no point in going on
-		if (direction == null)
-			return;
-	
-		// Check the affected blocks
-		for (int i = 1; i < bpee.getLength() + 2; i++) {
-			Block block = piston.getRelative(direction, i);
-		
-			if (block.getType() == Material.AIR){
-				break;
-			}
-		
+    public void pistonExtend(BlockPistonExtendEvent bpee)
+    {
+		for(Block block : bpee.getBlocks())
+		{
 			AccessDelegate delegate = AccessDelegate.getDelegate(block);
 			IReinforcement reinforcement = delegate.getReinforcement();
 		
-			if (reinforcement != null){
-				bpee.setCancelled(true);
-				break;
+			if (reinforcement != null)
+			{
+				if(reinforcement.getMaterialId() == 0)
+				{
+					reinforcementBroken(reinforcement);
+				}
+				else
+				{
+					bpee.setCancelled(true);
+					break;
+				}
 			}
 		}
     }
@@ -188,7 +179,7 @@ public class BlockListener implements Listener {
 		BlockState state = piston.getState();
 		MaterialData data = state.getData();
 		BlockFace direction = null;
-	
+		
 		// Check the block it pushed directly
 		if (data instanceof PistonBaseMaterial) {
 			direction = ((PistonBaseMaterial) data).getFacing();
@@ -203,9 +194,18 @@ public class BlockListener implements Listener {
 		AccessDelegate delegate = AccessDelegate.getDelegate(moved);
 		IReinforcement reinforcement = delegate.getReinforcement();
 	
-		if (reinforcement != null) {
-			bpre.setCancelled(true);
+		if (reinforcement != null)
+		{
+			if(reinforcement.getMaterialId() == 0)
+			{
+				reinforcementBroken(reinforcement);
+			}
+			else
+			{
+				bpre.setCancelled(true);
+			}
 		}
+
     }
     
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)

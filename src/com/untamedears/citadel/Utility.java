@@ -91,6 +91,7 @@ public class Utility {
                 material = state.getReinforcementMaterial();
                 break;
             case NORMAL:
+            case INFO:
             	material = ReinforcementMaterial.get(Material.AIR);
             	break;
             default:
