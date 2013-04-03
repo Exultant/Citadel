@@ -39,8 +39,8 @@ public class PlayerState {
     private Integer cancelModePid;
 
     public PlayerState(Player player) {
-        reset();
         this.player = player;
+        reset();
         bypassMode = false;
     }
     
@@ -51,6 +51,7 @@ public class PlayerState {
         mode = PlacementMode.NORMAL;
         fortificationMaterial = null;
         securityLevel = SecurityLevel.PRIVATE;
+        setFaction(Citadel.getMemberManager().getMember(player).getPersonalGroup());
     }
 
     public PlacementMode getMode() {
