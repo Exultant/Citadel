@@ -8,25 +8,29 @@ general:
   inaccessibleInfo: false
 materials:
 - name: AIR
-  strength: 10
+  strength: 5
   requirements: 1
   flasher: GLASS
 - name: STONE
-  strength: 50
+  strength: 25
   requirements: 1
   flasher: STONE
 - name: IRON_INGOT
-  strength: 500
+  strength: 250
   requirements: 1
   flasher: IRON_BLOCK
 - name: DIAMOND
-  strength: 2500
+  strength: 1800
   requirements: 1
   flasher: DIAMOND_BLOCK
 additionalSecurable:
 - BED_BLOCK
 - BOOKSHELF
+- JUKEBOX
 - BEACON
+- HOPPER
+- DROPPER
+- TRAPPED_CHEST
 - ANVIL
 - ENDER_CHEST
 - MOB_SPAWNER
@@ -46,6 +50,7 @@ nonReinforceable:
 - SNOW
 - ICE
 - CACTUS
+- CARROT
 - SUGAR_CANE_BLOCK
 - PORTAL
 - CAKE_BLOCK
