@@ -18,7 +18,9 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Hopper;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.minecart.HopperMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -29,6 +31,8 @@ import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.material.MaterialData;
@@ -148,6 +152,17 @@ public class BlockListener implements Listener {
         	bbe.setCancelled(true);
             block.getDrops().clear();
         }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void hopperTransfer(InventoryMoveItemEvent e) {
+    	InventoryHolder taker = e.getDestination().getHolder();
+    	//InventoryHolder giver = e.getSource().getHolder();
+    	
+    	// disable this entirely for now, so many security issues with it
+    	if(taker instanceof HopperMinecart || taker instanceof Hopper) {
+    		e.setCancelled(true);
+    	}
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
