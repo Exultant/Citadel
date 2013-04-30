@@ -1,6 +1,7 @@
 package com.untamedears.citadel.entity;
 
 import java.util.HashMap;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
@@ -16,15 +17,18 @@ public class NaturalReinforcement implements IReinforcement {
         new HashMap<Integer, NaturalReinforcementConfig>();
 
     private ReinforcementKey id_;
-    private int durability_;
+    private boolean broken_;
     private int max_durability_;
+    private Random random;
 
-    public NaturalReinforcement() {}
+    public NaturalReinforcement() {
+        this.random = new Random();
+    }
 
-    public NaturalReinforcement(Block block, int breakCount) {
+    public NaturalReinforcement(Block block, int max_durability) {
         this.id_ = new ReinforcementKey(block);
-        this.durability_ = breakCount;
-        this.max_durability_ = breakCount;
+        this.max_durability_ = max_durability;
+        this.random = new Random();
     }
 
     public ReinforcementKey getId() { return id_; }
@@ -41,34 +45,22 @@ public class NaturalReinforcement implements IReinforcement {
         }
     }
 
-    public int getDurability() { return durability_; }
-    public void setDurability(int durability) { durability_ = durability; }
-
     public int getMaxDurability() { return max_durability_; }
     public void setMaxDurability(int max_durability) { this.max_durability_ = max_durability; }
 
     public double getHealth() {
-        return (double) durability_ / (double) max_durability_;
+        return 1.0;
     }
 
     public String getHealthText() {
-        double health = getHealth();
-        if (health > 0.75) {
-            return "excellently";
-        } else if (health > 0.50) {
-            return "well";
-        } else if (health > 0.25) {
-            return "decently";
-        } else {
-            return "poorly";
-        }
+        return "naturally";
     }
 
     public String getStatus() { return getHealthText(); }
 
     @Override
     public String toString() {
-        return String.format("%s, durability: %d of %d", id_, durability_, max_durability_);
+        return String.format("%s, hardness %d", id_, max_durability_);
     }
 
     @Override
@@ -87,5 +79,19 @@ public class NaturalReinforcement implements IReinforcement {
     @Override
     public int hashCode() {
         return this.id_.hashCode();
+    }
+    
+    @Override
+    public boolean isBroken() {
+        return broken_;
+    }
+    
+    @Override
+    public boolean breakOnce() {
+        if (broken_) return true;
+        if (random.nextInt(max_durability_) == 0) {
+          broken_ = true;
+        }
+        return broken_;
     }
 }

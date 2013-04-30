@@ -345,7 +345,7 @@ public class CitadelCachingDao extends CitadelDao {
         }
 
         public IReinforcement save( IReinforcement r ){
-            if (r.getDurability() <= 0)
+            if (r.isBroken())
             {
                 delete(r);
                 return null;

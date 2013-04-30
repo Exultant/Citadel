@@ -7,9 +7,9 @@ public abstract interface IReinforcement extends
     public ReinforcementKey getId();
     public void setId(ReinforcementKey id);
     public Block getBlock();
-    public int getDurability();
-    public void setDurability(int durability);
     public double getHealth();
     public String getHealthText();
     public String getStatus();
+    public boolean isBroken();
+    public boolean breakOnce();
 }
