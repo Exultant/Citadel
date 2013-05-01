@@ -1,5 +1,9 @@
 package com.untamedears.citadel;
 
+import java.util.Random;
+import java.util.List;
+import java.util.ArrayList;
+
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -14,6 +18,8 @@ public class NaturalReinforcementConfig {
     private int maxDurability_;
     private int variance_;
     private double yAdjustment_;
+    private List<ChipChance> chipOptions;
+    private boolean disableNormalDrops;
 
     public NaturalReinforcementConfig(int materialId, int baseDurability) {
         setMaterialId(materialId);
@@ -22,6 +28,8 @@ public class NaturalReinforcementConfig {
         maxDurability_ = MAX_DURABILITY;
         variance_ = 0;
         yAdjustment_ = 0.0;
+        disableNormalDrops = false;
+        chipOptions = new ArrayList<ChipChance>();
     }
 
     public NaturalReinforcementConfig(ConfigurationSection config) {
@@ -39,6 +47,7 @@ public class NaturalReinforcementConfig {
             }
         }
         int baseDurability = config.getInt("durability", Integer.MIN_VALUE);
+        System.err.println(String.format("Natural reinforcement created on %s, durability %d", materialName, baseDurability));
         if (baseDurability == Integer.MIN_VALUE) {
             throw new Error(
                 "[Citadel] Unconfigured Natural Reinforcement Durability for " +
@@ -49,6 +58,19 @@ public class NaturalReinforcementConfig {
         setMaxDurability(config.getInt("maximum", MAX_DURABILITY));
         setVariance(config.getInt("variance", 0));
         setYAdjustment(config.getDouble("yadjust", 0.00000001));
+        disableNormalDrops = config.getBoolean("disableNormalDrops", false);
+        
+        // Configure chips dropped
+        chipOptions = new ArrayList<ChipChance>();
+        ConfigurationSection chipsConfig = config.getConfigurationSection("chipDrops");
+        if (chipsConfig != null) {
+            for (String chipMaterialName : chipsConfig.getKeys(false)) {
+                ChipChance option = new ChipChance();
+                option.probability = chipsConfig.getDouble(chipMaterialName, 0.0);
+                option.droppedItem = Material.matchMaterial(chipMaterialName);
+                chipOptions.add(option);
+            }
+        }
     }
 
     public int getMaterialId()  { return materialId_; }
@@ -102,5 +124,23 @@ public class NaturalReinforcementConfig {
             return maxDurability_;
         }
         return durability;
+    }
+    
+    public boolean getDisableNormalDrops() {
+        return disableNormalDrops;
+    }
+    
+    public Material generateChipDrop(Random random) {
+        for (ChipChance option : chipOptions) {
+            if (random.nextFloat() < option.probability) {
+                return option.droppedItem;
+            }
+        }
+        return null;
+    }
+    
+    private class ChipChance {
+        public double probability;
+        public Material droppedItem;
     }
 }

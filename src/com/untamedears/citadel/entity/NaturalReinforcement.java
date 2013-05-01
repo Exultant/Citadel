@@ -2,8 +2,12 @@ package com.untamedears.citadel.entity;
 
 import java.util.HashMap;
 import java.util.Random;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.block.Block;
 
 import com.untamedears.citadel.NaturalReinforcementConfig;
@@ -93,5 +97,23 @@ public class NaturalReinforcement implements IReinforcement {
           broken_ = true;
         }
         return broken_;
+    }
+    
+    public List<ItemStack> generateChipDrops() {
+        List<ItemStack> result = new ArrayList<ItemStack>();
+        NaturalReinforcementConfig config = getConfig();
+        if (config == null) {
+            return null;
+        }
+        
+        Material mat = getConfig().generateChipDrop(random);
+        if (mat != null) {
+            result.add(new ItemStack(mat, 1));
+        }
+        return result;
+    }
+    
+    public NaturalReinforcementConfig getConfig() {
+        return NaturalReinforcement.CONFIGURATION.get(getBlock().getTypeId());
     }
 }
