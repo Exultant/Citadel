@@ -253,6 +253,19 @@ public class PlayerReinforcement implements
         return this.id.hashCode();
     }
 
+    @Override
+    public boolean isBroken() {
+        return this.durability <= 0;
+    }
+
+    @Override
+    public boolean breakOnce() {
+        if (!isBroken()) {
+          this.durability--;
+        }
+        return isBroken();
+    }
+
     public DbUpdateAction getDbAction() { return this.dbAction; }
     public void setDbAction(DbUpdateAction value) { this.dbAction = value; }
 }
