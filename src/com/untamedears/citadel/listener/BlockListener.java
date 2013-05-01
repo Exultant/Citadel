@@ -129,6 +129,12 @@ public class BlockListener implements Listener {
                 if (is_cancelled) {
                     // Drop chips if not using silk touch
                     extraDrops = natural.generateChipDrops();
+                    if (extraDrops.size() > 0) {
+                        tool.setDurability((short) (tool.getDurability() + 1));
+                        if (tool.getDurability() >= tool.getType().getMaxDurability()) {
+                            player.setItemInHand(null);
+                        }
+                    }
                 } else {
                     // Block drops if told to and not using silk touch
                     if (natural.getConfig().getDisableNormalDrops()) {
