@@ -196,9 +196,9 @@ public class Utility {
     }
 
     public static boolean reinforcementDamaged(IReinforcement reinforcement) {
-        reinforcement.setDurability(reinforcement.getDurability() - 1);
-        boolean cancelled = reinforcement.getDurability() > 0;
-        if (reinforcement.getDurability() <= 0) {
+        boolean isBroken = reinforcement.breakOnce();
+        boolean cancelled = !isBroken;
+        if (!cancelled) {
             cancelled = reinforcementBroken(reinforcement);
         } else {
             if (reinforcement instanceof PlayerReinforcement) {

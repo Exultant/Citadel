@@ -10,6 +10,7 @@ import static com.untamedears.citadel.Utility.sendMessage;
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -28,6 +29,7 @@ import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.material.MaterialData;
@@ -88,6 +90,7 @@ public class BlockListener implements Listener {
     public void blockBreak(BlockBreakEvent bbe) {
         Block block = bbe.getBlock();
         Player player = bbe.getPlayer();
+        List<ItemStack> extraDrops = null;
 
         AccessDelegate delegate = AccessDelegate.getDelegate(block);
         IReinforcement reinforcement = delegate.getReinforcement();
@@ -115,6 +118,31 @@ public class BlockListener implements Listener {
                 // The player reinforcement broke. Now check for natural
                 is_cancelled = createNaturalReinforcement(block) != null;
             }
+        } else if (reinforcement instanceof NaturalReinforcement) {
+            NaturalReinforcement natural = (NaturalReinforcement) reinforcement;
+            is_cancelled = reinforcementDamaged(reinforcement);
+            
+            // Check for silk touch and bypass all chip behaviour to avoid infinite mining
+            ItemStack tool = player.getItemInHand();
+            boolean silkTouch = tool.containsEnchantment(Enchantment.SILK_TOUCH);
+            if (!silkTouch) {
+                if (is_cancelled) {
+                    // Drop chips if not using silk touch
+                    extraDrops = natural.generateChipDrops();
+                    if (extraDrops.size() > 0) {
+                        tool.setDurability((short) (tool.getDurability() + 1));
+                        if (tool.getDurability() >= tool.getType().getMaxDurability()) {
+                            player.setItemInHand(null);
+                        }
+                    }
+                } else {
+                    // Block drops if told to and not using silk touch
+                    if (natural.getConfig().getDisableNormalDrops()) {
+                        bbe.setCancelled(true);
+                        block.setType(Material.AIR);
+                    }
+                }
+            }
         } else {
             is_cancelled = reinforcementDamaged(reinforcement);
         }
@@ -122,6 +150,18 @@ public class BlockListener implements Listener {
         if (is_cancelled) {
             bbe.setCancelled(true);
             block.getDrops().clear();
+        }
+        
+        if (extraDrops != null) {
+            Location centerOfBlock = block.getLocation().add(0.5, 0.5, 0.5);
+            Location playerHeadLocation = player.getLocation().add(0, 1, 0);
+            Location difference = playerHeadLocation.subtract(centerOfBlock);
+            // Drop 1 block in direction of player's head
+            Location dropPosition = centerOfBlock.add(difference.multiply(1.0 / difference.length()));
+            
+            for (ItemStack drop : extraDrops) {
+                block.getWorld().dropItemNaturally(dropPosition, drop);
+            }
         }
     }
 
