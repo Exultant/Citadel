@@ -6,11 +6,12 @@ import static com.untamedears.citadel.Utility.maybeReinforcementDamaged;
 import static com.untamedears.citadel.Utility.reinforcementBroken;
 import static com.untamedears.citadel.Utility.reinforcementDamaged;
 import static com.untamedears.citadel.Utility.sendMessage;
+import static com.untamedears.citadel.Utility.sendThrottledMessage;
 import static com.untamedears.citadel.Utility.damagePlayerTool;
 
+import java.util.Arrays;
 import java.util.ConcurrentModificationException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -18,7 +19,9 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.block.Hopper;
+import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.minecart.HopperMinecart;
 import org.bukkit.event.EventHandler;
@@ -32,6 +35,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -42,12 +46,10 @@ import org.bukkit.Effect;
 import org.bukkit.World;
 
 import com.untamedears.citadel.Citadel;
-import com.untamedears.citadel.PlacementMode;
 import com.untamedears.citadel.SecurityLevel;
 import com.untamedears.citadel.access.AccessDelegate;
 import com.untamedears.citadel.entity.PlayerState;
 import com.untamedears.citadel.entity.IReinforcement;
-import com.untamedears.citadel.entity.NaturalReinforcement;
 import com.untamedears.citadel.entity.PlayerReinforcement;
 import com.untamedears.citadel.entity.ReinforcementMaterial;
 
@@ -55,6 +57,45 @@ import net.sacredlabyrinth.Phaed.PreciousStones.PreciousStones;
 
 public class BlockListener implements Listener {
 
+	public static final List<BlockFace> planar_sides = Arrays.asList(
+	        BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST);
+	
+    private boolean canPlace(Block block, String player_name) {
+        Material block_mat = block.getType();
+
+        // check that a hopper isn't placed under another persons protected chest
+        if (block_mat == Material.HOPPER){
+            Block above = block.getRelative(BlockFace.UP);
+            if (above.getState() instanceof InventoryHolder) {
+	            IReinforcement rein = AccessDelegate.getDelegate(above).getReinforcement();
+	            if (null != rein && rein instanceof PlayerReinforcement) {
+	                PlayerReinforcement pr = (PlayerReinforcement)rein;
+	                if (!pr.isAccessible(player_name)) {
+	                    return false;
+	                }
+	            }
+            }
+        }
+
+        // check that a chest isn't placed next to another persons protected chest
+        if (block_mat == Material.CHEST || block_mat == Material.TRAPPED_CHEST){
+            for (BlockFace direction : planar_sides) {
+                Block adjacent = block.getRelative(direction);
+                if (!(adjacent.getState() instanceof InventoryHolder)) {
+                    continue;
+                }
+                IReinforcement rein = AccessDelegate.getDelegate(adjacent).getReinforcement();
+                if (null != rein && rein instanceof PlayerReinforcement) {
+                    PlayerReinforcement pr = (PlayerReinforcement)rein;
+                    if (!pr.isAccessible(player_name)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+	
     /**
      * This handles the BlockPlaceEvent for Fortification mode (all placed blocks are reinforced)
      *
@@ -63,8 +104,15 @@ public class BlockListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void placeFortifiedBlock(BlockPlaceEvent bpe) {
         Player player = bpe.getPlayer();
-        PlayerState state = PlayerState.get(player);
         Block block = bpe.getBlockPlaced();
+        
+        if(!canPlace(block, player.getName())) {
+        	sendThrottledMessage(player, ChatColor.RED, "Cancelled block place, mismatched reinforcement.");
+            bpe.setCancelled(true);
+            return;
+        }
+
+        PlayerState state = PlayerState.get(player);
 
         switch (state.getMode())
         {
@@ -110,8 +158,7 @@ public class BlockListener implements Listener {
         Block block = bbe.getBlock();
         Player player = bbe.getPlayer();
 
-        AccessDelegate delegate = AccessDelegate.getDelegate(block);
-        IReinforcement reinforcement = delegate.getReinforcement();
+        IReinforcement reinforcement = AccessDelegate.getDelegate(block).getReinforcement();
         if (reinforcement == null) {
             reinforcement = createNaturalReinforcement(block);
             if (reinforcement != null && reinforcementDamaged(reinforcement)) {
@@ -154,15 +201,70 @@ public class BlockListener implements Listener {
         }
     }
 
+    public PlayerReinforcement getReinforcement(InventoryHolder holder) {
+        // Returns reinforcement of the inventory's holder or null if none exists
+        Location loc;
+        if (holder instanceof DoubleChest) {
+            loc = ((DoubleChest)holder).getLocation();
+        } else if (holder instanceof BlockState) {
+            loc = ((BlockState)holder).getLocation();
+        } else if (holder instanceof Minecart) {
+            // Vehicle inventories (should get the track?)
+        	loc = ((Minecart)holder).getLocation();
+        } else {
+        	return null;
+        }
+        IReinforcement reinforcement = AccessDelegate.getDelegate(loc.getBlock()).getReinforcement();
+        if (null != reinforcement && reinforcement instanceof PlayerReinforcement) {
+            PlayerReinforcement pr = (PlayerReinforcement)reinforcement;
+            // Treat public reinforcements as if they don't exist
+            if (!pr.getSecurityLevel().equals(SecurityLevel.PUBLIC)) {
+                return pr;
+            }
+        }
+        return null;
+    }
+    
     @EventHandler(ignoreCancelled = true)
     public void hopperTransfer(InventoryMoveItemEvent e) {
-    	InventoryHolder taker = e.getDestination().getHolder();
-    	//InventoryHolder giver = e.getSource().getHolder();
+
+    	try {
+	    	InventoryHolder taker = e.getDestination().getHolder();
+	    	PlayerReinforcement takerRein = getReinforcement(taker);
+	    	InventoryHolder giver = e.getSource().getHolder();
+	    	PlayerReinforcement giverRein = getReinforcement(giver);
+	    	
+	    	if(giverRein == null) {
+	    		// feeding from unowned block always allowed
+	    		Citadel.info("allowing public giver");
+	    		return;
+	    	}
+	    	
+	    	if(takerRein == null) {
+	    		// unowned takers never allowed
+	    		Citadel.info("disallowing public taker");
+	    		e.setCancelled(true);
+	    		return;
+	    	}
+
+	    	if(takerRein.getOwner() == giverRein.getOwner()) {
+	    		Citadel.info("allowing same owner named " + takerRein.getOwner().getName()); 
+	    		return;
+	    	}
+
+	    	if(giverRein.isAccessible(takerRein.getOwner().getName())) {
+	    		Citadel.info("allowing allowed taker named " + takerRein.getOwner().getName()); 
+	    		return;
+	    	}
     	
-    	// disable this entirely for now, so many security issues with it
-    	if(taker instanceof HopperMinecart || taker instanceof Hopper) {
-    		e.setCancelled(true);
-    	}
+	    } catch(Exception er) {
+	    	Citadel.warning("error handling hopperTransfer, disallowing");
+	    	Citadel.printStackTrace(er);
+	    }
+
+    	// by default deny
+    	Citadel.info("disallowing by default");
+    	e.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
@@ -170,8 +272,7 @@ public class BlockListener implements Listener {
     {
 		for(Block block : bpee.getBlocks())
 		{
-			AccessDelegate delegate = AccessDelegate.getDelegate(block);
-			IReinforcement reinforcement = delegate.getReinforcement();
+			IReinforcement reinforcement = AccessDelegate.getDelegate(block).getReinforcement();
 		
 			if (reinforcement != null)
 			{

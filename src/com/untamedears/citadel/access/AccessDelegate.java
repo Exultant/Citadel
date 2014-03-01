@@ -23,7 +23,7 @@ public abstract class AccessDelegate<T extends MaterialData> {
             return new DoorAccessDelegate(block, (Door) data);
         } else if (data instanceof Bed) {
             return new BedAccessDelegate(block, (Bed) data);
-        } else if (block.getType() == Material.CHEST) {
+        } else if (block.getType() == Material.CHEST || block.getType() == Material.TRAPPED_CHEST) {
             return new ChestAccessDelegate(block, data);
         } else {
             return new AccessDelegate<MaterialData>(block, data) {
