@@ -23,7 +23,7 @@ public class GroupCommand extends PlayerCommand {
 	public GroupCommand() {
 		super("Group Mode");
 		setDescription("Toggle group mode");
-		setUsage("/ctgroup ง8<group-name>");
+		setUsage("/ctgroup ยง8<group-name>");
 		setArgumentRange(1,1);
 		setIdentifiers(new String[] {"ctgroup", "ctg"});
 	}
@@ -33,6 +33,10 @@ public class GroupCommand extends PlayerCommand {
 		Faction group = Citadel.getGroupManager().getGroup(groupName);
 		if(group == null){
 			sendMessage(sender, ChatColor.RED, "Group doesn't exist");
+			return true;
+		}
+		if (group.isDisciplined()) {
+			sendMessage(sender, ChatColor.RED, Faction.kDisciplineMsg);
 			return true;
 		}
 		String senderName = sender.getName();

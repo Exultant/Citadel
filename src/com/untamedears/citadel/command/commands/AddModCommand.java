@@ -23,7 +23,7 @@ public class AddModCommand extends PlayerCommand {
 	public AddModCommand() {
 		super("Add Moderator");
 		setDescription("Adds a player as moderator to a group");
-		setUsage("/ctaddmod ง8<group-name> <player-name>");
+		setUsage("/ctaddmod ยง8<group-name> <player-name>");
 		setArgumentRange(2,2);
 		setIdentifiers(new String[] {"ctaddmod", "ctam"});
 	}
@@ -38,6 +38,10 @@ public class AddModCommand extends PlayerCommand {
 		Faction group = groupManager.getGroup(groupName);
 		if(group == null){
 			sendMessage(sender, ChatColor.RED, "Group doesn't exist");
+			return true;
+		}
+		if (group.isDisciplined()) {
+			sendMessage(sender, ChatColor.RED, Faction.kDisciplineMsg);
 			return true;
 		}
 		String founderName = sender.getName();
@@ -57,8 +61,12 @@ public class AddModCommand extends PlayerCommand {
 			sendMessage(sender, ChatColor.RED, "%s is already a moderator of %s", targetName, groupName);
 			return true;
 		}
+        Player player = null;
+        if (sender instanceof Player) {
+            player = (Player)sender;
+        }
 		if(group.isMember(targetName)){
-			groupManager.removeMemberFromGroup(groupName, targetName);
+			groupManager.removeMemberFromGroup(groupName, targetName, player);
 		}
         MemberManager memberManager = Citadel.getMemberManager();
         Member member = memberManager.getMember(targetName);
@@ -66,7 +74,7 @@ public class AddModCommand extends PlayerCommand {
         	member = new Member(targetName);
         	memberManager.addMember(member);
         }
-		groupManager.addModeratorToGroup(groupName, targetName);
+		groupManager.addModeratorToGroup(groupName, targetName, player);
 		sendMessage(sender, ChatColor.GREEN, "%s has been added as a moderator to %s", targetName, groupName);
 		if(memberManager.isOnline(targetName)){
 			sendMessage(memberManager.getOnlinePlayer(targetName), ChatColor.GREEN, "You have been added as " +

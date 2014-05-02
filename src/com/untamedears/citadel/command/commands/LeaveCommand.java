@@ -22,7 +22,7 @@ public class LeaveCommand extends PlayerCommand {
 	public LeaveCommand() {
 		super("Leave");
         setDescription("Leave a group");
-        setUsage("/ctleave ง8<group-name>");
+        setUsage("/ctleave ยง8<group-name>");
         setArgumentRange(1,1);
 		setIdentifiers(new String[] {"ctleave", "ctl"});
 	}
@@ -33,6 +33,10 @@ public class LeaveCommand extends PlayerCommand {
 		Faction group = groupManager.getGroup(groupName);
 		if(group == null){
 			sendMessage(sender, ChatColor.RED, "Group doesn't exist");
+			return true;
+		}
+		if (group.isDisciplined()) {
+			sendMessage(sender, ChatColor.RED, Faction.kDisciplineMsg);
 			return true;
 		}
 		String playerName = sender.getName();
@@ -48,11 +52,15 @@ public class LeaveCommand extends PlayerCommand {
 			sendMessage(sender, ChatColor.RED, "You are not a member of %s", group.getName());
 			return true;
 		}
+        Player player = null;
+        if (sender instanceof Player) {
+            player = (Player)sender;
+        }
 		if(group.isModerator(playerName)){
-			groupManager.removeModeratorFromGroup(groupName, playerName);
+			groupManager.removeModeratorFromGroup(groupName, playerName, player);
 		}
 		if(group.isMember(playerName)){
-			groupManager.removeMemberFromGroup(groupName, playerName);
+			groupManager.removeMemberFromGroup(groupName, playerName, player);
 		}
 		sendMessage(sender, ChatColor.GREEN, "You have left the group %s", group.getName());
 		MemberManager memberManager = Citadel.getMemberManager();

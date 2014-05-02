@@ -28,8 +28,8 @@ public class MembersCommand extends PlayerCommand {
 	public MembersCommand() {
 		super("List Members");
 		setDescription("List the members of a group");
-		setUsage("/ctmembers ง8<group-name>");
-		setArgumentRange(1,1);
+		setUsage("/ctmembers ยง8<group-name>");
+		setArgumentRange(1,2);
 		setIdentifiers(new String[] {"ctmembers", "ctm"});
 	}
 
@@ -39,6 +39,10 @@ public class MembersCommand extends PlayerCommand {
 		Faction group = groupManager.getGroup(groupName);
 		if(group == null){
 			sendMessage(sender, ChatColor.RED, "Group doesn't exist");
+			return true;
+		}
+		if (group.isDisciplined()) {
+			sendMessage(sender, ChatColor.RED, Faction.kDisciplineMsg);
 			return true;
 		}
 		String senderName = sender.getName();
@@ -52,9 +56,9 @@ public class MembersCommand extends PlayerCommand {
 			return true;
 		}
 		int page = 0;
-		if(args.length != 0){
+		if(args.length != 1){
 			try {
-				page = Integer.parseInt(args[0]) - 1;
+				page = Integer.parseInt(args[1]) - 1;
 			} catch (NumberFormatException ignored){
 				
 			}

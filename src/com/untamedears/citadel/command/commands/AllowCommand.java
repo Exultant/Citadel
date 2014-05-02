@@ -23,7 +23,7 @@ public class AllowCommand extends PlayerCommand {
 	public AllowCommand() {
 		super("Allow Player");
 		setDescription("Adds a player to your group");
-		setUsage("/ctallow ง8<group-name> <player name>");
+		setUsage("/ctallow ยง8<group-name> <player name>");
 		setArgumentRange(2,2);
 		setIdentifiers(new String[] {"ctallow", "cta"});
 	}
@@ -37,9 +37,13 @@ public class AllowCommand extends PlayerCommand {
 		GroupManager groupManager = Citadel.getGroupManager();
 		Faction group = groupManager.getGroup(groupName);
 		if(group == null){
-        	sendMessage(sender, ChatColor.RED, "Group doesn't exist");
-        	return true;
-        }
+			sendMessage(sender, ChatColor.RED, "Group doesn't exist");
+			return true;
+		}
+		if (group.isDisciplined()) {
+			sendMessage(sender, ChatColor.RED, Faction.kDisciplineMsg);
+			return true;
+		}
 		String senderName = sender.getName();
         if(!group.isFounder(senderName) && !group.isModerator(senderName)){
         	sendMessage(sender, ChatColor.RED, "Invalid access to modify this group");
@@ -65,13 +69,17 @@ public class AllowCommand extends PlayerCommand {
         	sendMessage(sender, ChatColor.RED, "%s is already a member of %s", targetName, group.getName());
         	return true;
         }
+        Player player = null;
+        if (sender instanceof Player) {
+            player = (Player)sender;
+        }
         MemberManager memberManager = Citadel.getMemberManager();
         Member member = memberManager.getMember(targetName);
         if(member == null){
         	member = new Member(targetName);
         	memberManager.addMember(member);
         }
-        groupManager.addMemberToGroup(groupName, targetName);
+        groupManager.addMemberToGroup(groupName, targetName, player);
         sendMessage(sender, ChatColor.GREEN, "Allowed %s access to %s blocks", targetName, groupName);
         if(memberManager.isOnline(targetName)){
         	sendMessage(memberManager.getOnlinePlayer(targetName), ChatColor.GREEN, 

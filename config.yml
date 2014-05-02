@@ -4,6 +4,7 @@ general:
   autoModeReset: 30
   redstoneDistance: 9
   groupsAllowed: 60
+  reinforcedCrops: true
 materials:
 - name: STONE
   strength: 25
@@ -20,9 +21,13 @@ materials:
 additionalSecurable:
 - BED_BLOCK
 - BOOKSHELF
+- BEACON
+- ANVIL
 nonReinforceable:
+- BEDROCK
+- ENDER_PORTAL_FRAME
 - SAPLING
-- GRASS
+- LONG_GRASS
 - DEAD_BUSH
 - PISTON_EXTENSION
 - PISTON_MOVING_PIECE
@@ -44,6 +49,7 @@ nonReinforceable:
 - VINE
 - NETHER_WARTS
 - ENDER_PORTAL
+naturalReinforcements:
 database:
   driver: com.mysql.jdbc.Driver
   url: jdbc:mysql://localhost:3306/bukkit
@@ -52,6 +58,26 @@ database:
   isolation: SERIALIZABLE
   logging: false
   rebuild: false
+  enablefilelog: false
 caching:
   max_age: 300000
   max_chunks: 10000
+
+# Possible verboseMessages:
+# - InteractionAttempt
+# - ReinDelegation
+# - AdminReinBypass
+# - ReinBypass
+# - RedstoneOpen
+# - GolemCreated
+# - NullGroup
+# - AdminReinLocked
+# - ReinLocked
+# - CropTrample
+# - ReinOvergrowth
+# - ReinCreated
+# - ReinDmg
+# - ReinDestroyed
+# - Enabled
+# - Disabled
+verboseMessages:
