@@ -17,19 +17,20 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>2.3.2</version>
           <configuration>
-            <source>1.7</source>
-            <target>1.7</target>
-            <compilerArgument></compilerArgument>
+            <source>1.6</source>
+            <target>1.6</target>
           </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
     
     <sourceDirectory>${basedir}/src</sourceDirectory>
+    
     <resources>
       <resource>
         <directory>${basedir}</directory>
         <includes>
+          <include>LICENSE.txt</include>
           <include>*.yml</include>
         </includes>
       </resource>
@@ -40,16 +41,16 @@
     <dependency>
       <groupId>org.bukkit</groupId>
       <artifactId>craftbukkit</artifactId>
-      <version>1.7.2</version>
+      <version>1.7.2-R0.3</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
   
   <repositories>
     <repository>
-      <id>lib</id>
-      <name>lib</name>
-      <url>${project.baseUri}lib</url>
+      <id>bukkit-repo</id>
+      <url>http://repo.bukkit.org/content/groups/public/</url>
     </repository>
   </repositories>
+  
 </project>
