@@ -2,6 +2,8 @@ package com.untamedears.citadel.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -16,8 +18,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.ContainerBlock;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.material.Openable;
 
 import com.untamedears.citadel.Citadel;
@@ -36,12 +38,14 @@ public class PlayerReinforcement implements
 
     public static final List<Integer> SECURABLE = new ArrayList<Integer>();
     public static final List<Integer> NON_REINFORCEABLE = new ArrayList<Integer>();
+    public static final Map<Integer, Double> MATERIAL_SCALING = new HashMap<Integer, Double>();
 
     @Id private ReinforcementKey id;
     private int materialId;
     private int durability;
     private SecurityLevel securityLevel;
     private String chunkId;
+    private boolean insecure;
     // @Transient == not persisted in the DB
     @Transient private DbUpdateAction dbAction;
 
@@ -49,9 +53,11 @@ public class PlayerReinforcement implements
     @Column(name="version")
     private int dbRowVersion;  // Do not touch
 
-    @ManyToOne
-    @JoinColumn(name = "name")
-    private Faction owner;
+    @Column(name = "name")
+    private String ownerName;
+
+    @Column(name="maturation_time")
+    private int maturationTime;
 
 
     public PlayerReinforcement() {
@@ -65,11 +71,25 @@ public class PlayerReinforcement implements
             SecurityLevel securityLevel) {
         this.id = new ReinforcementKey(block);
         this.materialId = material.getMaterial().getId();
-        this.durability = material.getStrength();
-        this.owner = owner;
+        double baseDurability = (double)material.getStrength();
+        double scale = 1.00000001D;
+        int blockType = block.getTypeId();
+        if (PlayerReinforcement.MATERIAL_SCALING.containsKey(blockType)) {
+            scale = PlayerReinforcement.MATERIAL_SCALING.get(blockType);
+        }
+        this.durability = (int)(baseDurability * scale);
+        this.ownerName = owner.getName();
         this.securityLevel = securityLevel;
         this.chunkId = this.id.getChunkId();
         this.dbAction = DbUpdateAction.INSERT;
+        if (this.durability < 50) {
+            this.maturationTime = 0;
+        } else {
+            final double interval = Citadel.getConfigManager().getMaturationIntervalD();
+            // Maturation time is in minutes since the epoch (Jan 1, 1970)
+            double tmpDur = (baseDurability / interval) * 60.0D;
+            this.maturationTime = (int)(System.currentTimeMillis() / 60000L + (long)tmpDur);
+        }
     }
 
     private void flagForDbUpdate() {
@@ -83,6 +103,7 @@ public class PlayerReinforcement implements
         setDurability(that.getDurability());
         setOwner(that.getOwner());
         setSecurityLevel(that.getSecurityLevel());
+        setMaturationTime(that.getMaturationTime());
         if (getDbAction() == DbUpdateAction.DELETE) {
             setDbAction(DbUpdateAction.SAVE);
         }
@@ -129,6 +150,22 @@ public class PlayerReinforcement implements
         this.durability = durability;
     }
 
+    public double getScaleFactor() {
+        int blockType = this.getBlock().getTypeId();
+        if (PlayerReinforcement.MATERIAL_SCALING.containsKey(blockType)) {
+            return PlayerReinforcement.MATERIAL_SCALING.get(blockType);
+        }
+        return 1.0000001D;
+    }
+
+    public int getMaxDurability() {
+        return this.getMaterial().getStrength();
+    }
+
+    public int getScaledMaxDurability() {
+        return (int)((double)this.getMaterial().getStrength() * this.getScaleFactor());
+    }
+
     public String getChunkId() {
         return this.chunkId;
     }
@@ -146,17 +183,49 @@ public class PlayerReinforcement implements
         this.securityLevel = securityLevel;
     }
 
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public void setOwnerName(String newOwner) {
+        flagForDbUpdate();
+        ownerName = newOwner;
+    }
+
     public Faction getOwner() {
-        return owner;
+        return Citadel.getGroupManager().getDelegatedGroup(getOwnerName());
     }
 
     public void setOwner(Faction group) {
-        flagForDbUpdate();
-        this.owner = group;
+        String group_name = null;
+        if (group != null) {
+            group_name = group.getName();
+        }
+        setOwnerName(group_name);
+    }
+
+    public int getMaturationTime() {
+        return this.maturationTime;
+    }
+
+    public void setMaturationTime(int time) {
+        this.maturationTime = time;
+    }
+
+    public boolean isInsecure() {
+        return this.insecure;
+    }
+
+    public void setInsecure(boolean value) {
+        this.insecure = value;
+    }
+
+    public void toggleInsecure() {
+        this.setInsecure(!this.isInsecure());
     }
 
     public double getHealth() {
-        return (double) durability / (double) getMaterial().getStrength();
+        return (double)durability / ((double)this.getMaterial().getStrength() * this.getScaleFactor());
     }
 
     public String getHealthText() {
@@ -186,21 +255,32 @@ public class PlayerReinforcement implements
     }
 
     public boolean isAccessible(Player player) {
-        String name = player.getDisplayName();
-        return isAccessible(name);
+        final String name = player.getName();
+        return isAccessible(player, name);
     }
 
     public boolean isAccessible(String name) {
+        final Player player = Bukkit.getPlayerExact(name);
+        return isAccessible(player, name);
+    }
+
+    public boolean isAccessible(Player player, String name) {
+        final Faction owner = getOwner();
         if (owner == null) {
             Citadel.severe(String.format("isAccessible(%s) encountered unowned reinforcement: %s",
                            name, toString()));
+            sendMessage(player, ChatColor.RED,
+                "This reinforcement has an issue. Please send modmail. " + getId().toString());
+            return false;
+        }
+        if (owner.isDisciplined()) {
             return false;
         }
         switch (securityLevel) {
             case PRIVATE:
-                return name.equals(owner.getFounder());
+                return owner.isFounder(name);
             case GROUP:
-                return name.equals(owner.getFounder()) || owner.isMember(name) || owner.isModerator(name);
+                return owner.isFounder(name) || owner.isMember(name) || owner.isModerator(name);
             case PUBLIC:
             	return true;
         }
@@ -208,24 +288,38 @@ public class PlayerReinforcement implements
     }
 
     public boolean isBypassable(Player player) {
-        String name = player.getDisplayName();
+        final String name = player.getName();
+        return isBypassable(player, name);
+    }
+
+    public boolean isBypassable(String name) {
+        final Player player = Bukkit.getPlayerExact(name);
+        return isBypassable(player, name);
+    }
+
+    public boolean isBypassable(Player player, String name) {
+        final Faction owner = getOwner();
         if (owner == null) {
             Citadel.severe(String.format("isBypassable(%s) encountered unowned reinforcement: %s",
                            name, toString()));
-            sendMessage(player, ChatColor.RED, "This reinforcement has an issue. Please send modmail.");
+            sendMessage(player, ChatColor.RED,
+                "This reinforcement has an issue. Please send modmail. " + getId().toString());
+            return false;
+        }
+        if (owner.isDisciplined()) {
             return false;
         }
         switch (securityLevel) {
             case PRIVATE:
-                return name.equals(owner.getFounder());
+                return owner.isFounder(name);
             default:
-                return name.equals(owner.getFounder()) || owner.isModerator(name);
+                return owner.isFounder(name) || owner.isModerator(name);
         }
     }
 
     public boolean isSecurable() {
         Block block = getBlock();
-        return block.getState() instanceof ContainerBlock
+        return block.getState() instanceof InventoryHolder
                 || block.getState().getData() instanceof Openable
                 || SECURABLE.contains(block.getTypeId());
     }

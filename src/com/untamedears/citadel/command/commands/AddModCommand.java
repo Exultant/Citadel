@@ -40,6 +40,10 @@ public class AddModCommand extends PlayerCommand {
 			sendMessage(sender, ChatColor.RED, "Group doesn't exist");
 			return true;
 		}
+		if (group.isDisciplined()) {
+			sendMessage(sender, ChatColor.RED, Faction.kDisciplineMsg);
+			return true;
+		}
 		String founderName = sender.getName();
 		if(!group.isFounder(founderName)){
 			sendMessage(sender, ChatColor.RED, "Invalid permission to modify this group");
@@ -57,8 +61,12 @@ public class AddModCommand extends PlayerCommand {
 			sendMessage(sender, ChatColor.RED, "%s is already a moderator of %s", targetName, groupName);
 			return true;
 		}
+        Player player = null;
+        if (sender instanceof Player) {
+            player = (Player)sender;
+        }
 		if(group.isMember(targetName)){
-			groupManager.removeMemberFromGroup(groupName, targetName);
+			groupManager.removeMemberFromGroup(groupName, targetName, player);
 		}
         MemberManager memberManager = Citadel.getMemberManager();
         Member member = memberManager.getMember(targetName);
@@ -66,7 +74,7 @@ public class AddModCommand extends PlayerCommand {
         	member = new Member(targetName);
         	memberManager.addMember(member);
         }
-		groupManager.addModeratorToGroup(groupName, targetName);
+		groupManager.addModeratorToGroup(groupName, targetName, player);
 		sendMessage(sender, ChatColor.GREEN, "%s has been added as a moderator to %s", targetName, groupName);
 		if(memberManager.isOnline(targetName)){
 			sendMessage(memberManager.getOnlinePlayer(targetName), ChatColor.GREEN, "You have been added as " +

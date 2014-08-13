@@ -1,5 +1,7 @@
 package com.untamedears.citadel.access;
 
+import static com.untamedears.citadel.Utility.isPlant;
+
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.material.Bed;
@@ -7,6 +9,7 @@ import org.bukkit.material.Door;
 import org.bukkit.material.MaterialData;
 
 import com.untamedears.citadel.Citadel;
+import com.untamedears.citadel.Citadel.VerboseMsg;
 import com.untamedears.citadel.entity.IReinforcement;
 
 /**
@@ -19,23 +22,27 @@ public abstract class AccessDelegate<T extends MaterialData> {
 
     public static AccessDelegate getDelegate(Block block) {
         MaterialData data = block.getState().getData();
-        if (data instanceof Door) {
+        if (DoorAccessDelegate.canDelegate(block, data)) {
             return new DoorAccessDelegate(block, (Door) data);
-        } else if (data instanceof Bed) {
+
+        } else if (BedAccessDelegate.canDelegate(block, data)) {
             return new BedAccessDelegate(block, (Bed) data);
-        } else if (block.getType() == Material.CHEST) {
+
+        } else if (ChestAccessDelegate.canDelegate(block, data)) {
             return new ChestAccessDelegate(block, data);
-        } else {
-            return new AccessDelegate<MaterialData>(block, data) {
-                @Override
-                protected boolean shouldDelegate() {
-                    return false;
-                }
-                @Override
-                protected void delegate() {
-                }
-            };
+
+        } else if (CropAccessDelegate.canDelegate(block, data)) {
+            return new CropAccessDelegate(block, data);
         }
+        return new AccessDelegate<MaterialData>(block, data) {
+            @Override
+            protected boolean shouldDelegate() {
+                return false;
+            }
+            @Override
+            protected void delegate() {
+            }
+        };
     }
     
     protected Block block;
@@ -46,10 +53,19 @@ public abstract class AccessDelegate<T extends MaterialData> {
         this.block = block;
         this.data = data;
 
+        boolean show_info = !(this instanceof CropAccessDelegate);
         if (shouldDelegate()) {
-            Citadel.info("Attempted interaction with %s block at " + block.getLocation().toString());
+            if (show_info) {
+                Citadel.verbose(
+                    VerboseMsg.InteractionAttempt,
+                    block.getLocation().toString());
+            }
             delegate();
-            Citadel.info("Delegated to %s block at " + block.getLocation().toString());
+            if (show_info) {
+                Citadel.verbose(
+                    VerboseMsg.ReinDelegation,
+                    block.getLocation().toString());
+            }
         }
     }
 
@@ -63,5 +79,9 @@ public abstract class AccessDelegate<T extends MaterialData> {
     public IReinforcement getReinforcement() {
         if (reinforcement == null) reinforcement = Citadel.getReinforcementManager().getReinforcement(block);
         return reinforcement;
+    }
+
+    public boolean isReinforced() {
+        return getReinforcement() != null;
     }
 }

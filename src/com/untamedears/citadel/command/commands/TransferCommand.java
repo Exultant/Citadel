@@ -4,6 +4,7 @@ import static com.untamedears.citadel.Utility.sendMessage;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import com.untamedears.citadel.Citadel;
 import com.untamedears.citadel.GroupManager;
@@ -35,8 +36,13 @@ public class TransferCommand extends PlayerCommand {
 			sendMessage(sender, ChatColor.RED, "Group doesn't exist");
 			return true;
 		}
+		boolean admin_mode = sender.hasPermission("citadel.admin.cttransfer");
+		if (group.isDisciplined() && !admin_mode) {
+			sendMessage(sender, ChatColor.RED, Faction.kDisciplineMsg);
+			return true;
+		}
 		String senderName = sender.getName();
-		if(!group.isFounder(senderName)){
+		if(!group.isFounder(senderName) && !admin_mode){
 			sendMessage(sender, ChatColor.RED, "Invalid permission to transfer this group");
 			return true;
 		}
@@ -45,33 +51,37 @@ public class TransferCommand extends PlayerCommand {
 			return true;
 		}
 		String targetName = args[1];
-		if(senderName.equalsIgnoreCase(targetName)){
+		if(senderName.equalsIgnoreCase(targetName) && !admin_mode){
 			sendMessage(sender, ChatColor.RED, "You already own this group");
 			return true;
 		}
 		int groupsAllowed = Citadel.getConfigManager().getGroupsAllowed();
-		if(groupManager.getPlayerGroupsAmount(targetName) >= groupsAllowed){
+		if(groupManager.getPlayerGroupsAmount(targetName) >= groupsAllowed && !admin_mode){
 			sendMessage(sender, ChatColor.RED, "This player has already reached the maximum amount of groups allowed");
 			return true;
 		}
 		MemberManager memberManager = Citadel.getMemberManager();
-		if(!memberManager.isOnline(targetName)){
+		if(!memberManager.isOnline(targetName) && !admin_mode){
 			sendMessage(sender, ChatColor.RED, "User must be online");
 			return true;
 		}
+        Player player = null;
+        if (sender instanceof Player) {
+            player = (Player)sender;
+        }
 		Member member = memberManager.getMember(targetName);
 		if(member == null){
 			member = new Member(targetName);
 			memberManager.addMember(member);
 		}
 		if(group.isMember(targetName)){
-			groupManager.removeMemberFromGroup(groupName, targetName);
+			groupManager.removeMemberFromGroup(groupName, targetName, player);
 		}
 		if(group.isModerator(targetName)){
-			groupManager.removeModeratorFromGroup(groupName, targetName);
+			groupManager.removeModeratorFromGroup(groupName, targetName, player);
 		}
 		group.setFounder(targetName);
-		groupManager.addGroup(group);
+		groupManager.addGroup(group, player);
 		sendMessage(sender, ChatColor.GREEN, "You have transferred %s to %s", groupName, targetName);
 		if(memberManager.isOnline(targetName)){
 			sendMessage(memberManager.getOnlinePlayer(targetName), ChatColor.YELLOW, "%s has transferred the group %s to you", 
