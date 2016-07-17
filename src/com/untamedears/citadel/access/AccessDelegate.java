@@ -19,11 +19,11 @@ public abstract class AccessDelegate<T extends MaterialData> {
 
     public static AccessDelegate getDelegate(Block block) {
         MaterialData data = block.getState().getData();
-        if (data instanceof Door) {
-            return new DoorAccessDelegate(block, (Door) data);
-        } else if (data instanceof Bed) {
+        if (DoorAccessDelegate.canDelegate(block, data)) {
+            return new DoorAccessDelegate(block, data);
+        } else if (BedAccessDelegate.canDelegate(block, data)) {
             return new BedAccessDelegate(block, (Bed) data);
-        } else if (block.getType() == Material.CHEST || block.getType() == Material.TRAPPED_CHEST) {
+        } else if (ChestAccessDelegate.canDelegate(block, data)) {
             return new ChestAccessDelegate(block, data);
         } else {
             return new AccessDelegate<MaterialData>(block, data) {
@@ -45,11 +45,11 @@ public abstract class AccessDelegate<T extends MaterialData> {
     public AccessDelegate(Block block, T data) {
         this.block = block;
         this.data = data;
-
+        
         if (shouldDelegate()) {
-            Citadel.info("Attempted interaction with %s block at " + block.getLocation().toString());
+            Citadel.info("Attempted interaction with " + block.getType() + "  block at " + block.getLocation().toString());
             delegate();
-            Citadel.info("Delegated to %s block at " + block.getLocation().toString());
+            Citadel.info("Delegated to " + this.block.getType() + " block at " + this.block.getLocation().toString());
         }
     }
 

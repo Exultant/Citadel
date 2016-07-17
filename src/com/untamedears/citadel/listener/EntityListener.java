@@ -54,7 +54,9 @@ public class EntityListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void changeBlock(EntityChangeBlockEvent ecbe) {
-        ecbe.setCancelled(maybeReinforcementDamaged(ecbe.getBlock()));
+    	if(ecbe.getEntityType() != EntityType.FALLING_BLOCK) {
+    		ecbe.setCancelled(maybeReinforcementDamaged(ecbe.getBlock()));
+    	}
     }
 
     @EventHandler(ignoreCancelled = true)

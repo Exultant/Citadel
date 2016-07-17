@@ -226,7 +226,7 @@ public class Utility {
     }
 
     public static boolean maybeReinforcementDamaged(Block block) {
-        AccessDelegate delegate = AccessDelegate.getDelegate(block);
+    	AccessDelegate delegate = AccessDelegate.getDelegate(block);
         IReinforcement reinforcement = delegate.getReinforcement();
         return reinforcement != null && reinforcementDamaged(reinforcement);
     }

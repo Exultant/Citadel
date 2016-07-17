@@ -2,8 +2,8 @@ package com.untamedears.citadel.task;
 
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.ContainerBlock;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
 
@@ -65,8 +65,8 @@ public class BlockFlasher implements Runnable {
     }
 
     private void setCleanupTask() {
-        if (originalState instanceof ContainerBlock) {
-            final Inventory inventory = ((ContainerBlock) originalState).getInventory();
+        if (originalState instanceof InventoryHolder) {
+            final Inventory inventory = ((InventoryHolder) originalState).getInventory();
             final ItemStack[] contents = inventory.getContents();
             cleanupTask = new Runnable() {
                 public void run() {

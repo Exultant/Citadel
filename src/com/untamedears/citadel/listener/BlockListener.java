@@ -10,6 +10,7 @@ import static com.untamedears.citadel.Utility.sendThrottledMessage;
 import static com.untamedears.citadel.Utility.damagePlayerTool;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 
@@ -416,7 +417,7 @@ public class BlockListener implements Listener {
             double max_z = blockLocation.getZ() + redstoneDistance;
             World blockWorld = blockLocation.getWorld();
             //Set<Player> onlinePlayers = new HashSet<Player>(Citadel.getMemberManager().getOnlinePlayers());
-            Player[] onlinePlayers = Citadel.getPlugin().getServer().getOnlinePlayers();
+            Collection<? extends Player> onlinePlayers = Citadel.getPlugin().getServer().getOnlinePlayers();
             boolean isAuthorizedPlayerNear = false;
             try {
                 for (Player player : onlinePlayers) {
